@@ -3077,3 +3077,405 @@ let testFisherHotelling =
 
               // Correlation with constant data should be NaN
               Expect.isTrue (System.Double.IsNaN(result.Coefficient)) "Coefficient should be NaN with zero variance" ]
+
+[<Tests>]
+let anovaTests =
+    testList
+        "Testing.Anova"
+        [
+
+          // One-Way ANOVA Tests
+          testCase "oneWayAnova with simple groups"
+          <| fun () ->
+              // Three groups with different means
+              let group1 =
+                  [ 3.0
+                    4.0
+                    3.5
+                    3.8
+                    4.2 ]
+              let group2 =
+                  [ 5.0
+                    5.5
+                    5.2
+                    5.8
+                    5.3 ]
+              let group3 =
+                  [ 7.0
+                    7.5
+                    7.2
+                    6.8
+                    7.3 ]
+              let samples =
+                  [ group1
+                    group2
+                    group3 ]
+
+              let result = Anova.oneWayAnova samples
+
+              // F-statistic should be positive and significant
+              Expect.isTrue (result.Factor.Statistic > 0.0) "F-statistic should be positive"
+              Expect.isTrue
+                  (result.Factor.Significance < 0.05)
+                  "Significance should be < 0.05 for clearly different groups"
+              // Degrees of freedom: groups - 1 = 2
+              Expect.floatClose Accuracy.high result.Factor.DegreesOfFreedom 2.0 "Between-groups DoF should be 2"
+              // Error degrees of freedom: total - groups = 15 - 3 = 12
+              Expect.floatClose Accuracy.high result.Error.DegreesOfFreedom 12.0 "Within-groups DoF should be 12"
+              // Total degrees of freedom: total samples - 1 = 14
+              Expect.floatClose Accuracy.high result.Total.DegreesOfFreedom 14.0 "Total DoF should be 14"
+
+          testCase "oneWayAnova with very similar groups"
+          <| fun () ->
+              // All groups have very similar means - should have small F-statistic
+              let group1 =
+                  [ 5.0
+                    5.1
+                    4.9
+                    5.0 ]
+              let group2 =
+                  [ 5.0
+                    5.05
+                    4.95
+                    5.0 ]
+              let group3 =
+                  [ 5.0
+                    5.02
+                    4.98
+                    5.0 ]
+              let samples =
+                  [ group1
+                    group2
+                    group3 ]
+
+              let result = Anova.oneWayAnova samples
+
+              // Between-group variance should be very small
+              Expect.isTrue (result.Factor.SumOfSquares < 0.01) "Between-groups SS should be very small"
+              // F-statistic should be small and not significant
+              Expect.isTrue (result.Factor.Statistic < 1.0) "F-statistic should be small for similar groups"
+              Expect.isTrue (result.Factor.Significance > 0.05) "Should not be significant"
+
+          testCase "oneWayAnova with two groups"
+          <| fun () ->
+              // Minimum case: two groups
+              let group1 =
+                  [ 1.0
+                    2.0
+                    3.0
+                    4.0
+                    5.0 ]
+              let group2 =
+                  [ 6.0
+                    7.0
+                    8.0
+                    9.0
+                    10.0 ]
+              let samples =
+                  [ group1
+                    group2 ]
+
+              let result = Anova.oneWayAnova samples
+
+              Expect.floatClose Accuracy.high result.Factor.DegreesOfFreedom 1.0 "DoF should be 1 for two groups"
+              Expect.isTrue (result.Factor.Statistic > 0.0) "F-statistic should be positive"
+              // Sum of squares: total = between + within
+              let totalCheck = result.Factor.SumOfSquares + result.Error.SumOfSquares
+              Expect.floatClose
+                  Accuracy.low
+                  result.Total.SumOfSquares
+                  totalCheck
+                  "Total SS should equal sum of components"
+
+          testCase "oneWayAnova variation sources"
+          <| fun () ->
+              // Test variation source types are correctly assigned
+              let group1 =
+                  [ 2.0
+                    3.0
+                    4.0 ]
+              let group2 =
+                  [ 5.0
+                    6.0
+                    7.0 ]
+              let group3 =
+                  [ 8.0
+                    9.0
+                    10.0 ]
+              let samples =
+                  [ group1
+                    group2
+                    group3 ]
+
+              let result = Anova.oneWayAnova samples
+
+              Expect.equal
+                  result.Factor.Source
+                  Anova.VariationSource.BetweenGroups
+                  "Factor source should be BetweenGroups"
+              Expect.equal result.Error.Source Anova.VariationSource.WithinGroups "Error source should be WithinGroups"
+              Expect.equal result.Total.Source Anova.VariationSource.Total "Total source should be Total"
+
+          testCase "oneWayAnova mean squares calculation"
+          <| fun () ->
+              let group1 =
+                  [ 10.0
+                    12.0
+                    14.0 ]
+              let group2 =
+                  [ 20.0
+                    22.0
+                    24.0 ]
+              let samples =
+                  [ group1
+                    group2 ]
+
+              let result = Anova.oneWayAnova samples
+
+              // Mean square = Sum of squares / degrees of freedom
+              let expectedFactorMS = result.Factor.SumOfSquares / result.Factor.DegreesOfFreedom
+              let expectedErrorMS = result.Error.SumOfSquares / result.Error.DegreesOfFreedom
+
+              Expect.floatClose
+                  Accuracy.high
+                  result.Factor.MeanSquares
+                  expectedFactorMS
+                  "Factor mean squares should be SS/DoF"
+              Expect.floatClose
+                  Accuracy.high
+                  result.Error.MeanSquares
+                  expectedErrorMS
+                  "Error mean squares should be SS/DoF"
+
+          // Two-Way ANOVA Tests
+          testCase "twoWayANOVA Fixed model"
+          <| fun () ->
+              // 2x2 design with 3 replicates each
+              let samples =
+                  [| [| [| 1.0
+                           2.0
+                           3.0 |]
+                        [| 4.0
+                           5.0
+                           6.0 |] |]
+                     [| [| 7.0
+                           8.0
+                           9.0 |]
+                        [| 10.0
+                           11.0
+                           12.0 |] |] |]
+
+              let result = Anova.twoWayANOVA Anova.TwoWayAnovaModel.Fixed samples
+
+              // Check degrees of freedom
+              Expect.floatClose Accuracy.high result.FactorFst.DegreesOfFreedom 1.0 "First factor DoF should be 1"
+              Expect.floatClose Accuracy.high result.FactorSnd.DegreesOfFreedom 1.0 "Second factor DoF should be 1"
+              Expect.floatClose Accuracy.high result.Interaction.DegreesOfFreedom 1.0 "Interaction DoF should be 1"
+              Expect.floatClose Accuracy.high result.Error.DegreesOfFreedom 8.0 "Error DoF should be 8"
+
+              // All F-statistics should be positive
+              Expect.isTrue (result.FactorFst.Statistic > 0.0) "First factor F-statistic should be positive"
+              Expect.isTrue (result.FactorSnd.Statistic > 0.0) "Second factor F-statistic should be positive"
+
+          testCase "twoWayANOVA Mixed model"
+          <| fun () ->
+              let samples =
+                  [| [| [| 2.0
+                           3.0
+                           4.0 |]
+                        [| 5.0
+                           6.0
+                           7.0 |] |]
+                     [| [| 8.0
+                           9.0
+                           10.0 |]
+                        [| 11.0
+                           12.0
+                           13.0 |] |] |]
+
+              let result = Anova.twoWayANOVA Anova.TwoWayAnovaModel.Mixed samples
+
+              // Test that result structure is valid
+              Expect.isTrue
+                  (not (System.Double.IsNaN(result.FactorFst.Statistic)))
+                  "First factor statistic should not be NaN"
+              Expect.isTrue
+                  (not (System.Double.IsNaN(result.FactorSnd.Statistic)))
+                  "Second factor statistic should not be NaN"
+              Expect.isTrue
+                  (not (System.Double.IsNaN(result.Interaction.Statistic)))
+                  "Interaction statistic should not be NaN"
+
+          testCase "twoWayANOVA Random model"
+          <| fun () ->
+              let samples =
+                  [| [| [| 1.5
+                           2.5
+                           3.5 |]
+                        [| 4.5
+                           5.5
+                           6.5 |] |]
+                     [| [| 7.5
+                           8.5
+                           9.5 |]
+                        [| 10.5
+                           11.5
+                           12.5 |] |] |]
+
+              let result = Anova.twoWayANOVA Anova.TwoWayAnovaModel.Random samples
+
+              // All variation sources should have valid values
+              Expect.isTrue (result.FactorFst.SumOfSquares >= 0.0) "First factor SS should be non-negative"
+              Expect.isTrue (result.FactorSnd.SumOfSquares >= 0.0) "Second factor SS should be non-negative"
+              Expect.isTrue (result.Interaction.SumOfSquares >= 0.0) "Interaction SS should be non-negative"
+              Expect.isTrue (result.Error.SumOfSquares >= 0.0) "Error SS should be non-negative"
+
+          testCase "twoWayANOVA with larger design"
+          <| fun () ->
+              // 3x2 design with 4 replicates
+              let samples =
+                  [| [| [| 1.0
+                           2.0
+                           3.0
+                           4.0 |]
+                        [| 5.0
+                           6.0
+                           7.0
+                           8.0 |] |]
+                     [| [| 9.0
+                           10.0
+                           11.0
+                           12.0 |]
+                        [| 13.0
+                           14.0
+                           15.0
+                           16.0 |] |]
+                     [| [| 17.0
+                           18.0
+                           19.0
+                           20.0 |]
+                        [| 21.0
+                           22.0
+                           23.0
+                           24.0 |] |] |]
+
+              let result = Anova.twoWayANOVA Anova.TwoWayAnovaModel.Fixed samples
+
+              // Check degrees of freedom for 3x2 design
+              Expect.floatClose Accuracy.high result.FactorFst.DegreesOfFreedom 2.0 "First factor DoF should be 2"
+              Expect.floatClose Accuracy.high result.FactorSnd.DegreesOfFreedom 1.0 "Second factor DoF should be 1"
+              Expect.floatClose Accuracy.high result.Interaction.DegreesOfFreedom 2.0 "Interaction DoF should be 2"
+              Expect.floatClose Accuracy.high result.Error.DegreesOfFreedom 18.0 "Error DoF should be 18"
+              Expect.floatClose Accuracy.high result.Total.DegreesOfFreedom 23.0 "Total DoF should be 23"
+
+          testCase "twoWayANOVA sum of squares partitioning"
+          <| fun () ->
+              let samples =
+                  [| [| [| 3.0
+                           4.0
+                           5.0 |]
+                        [| 6.0
+                           7.0
+                           8.0 |] |]
+                     [| [| 9.0
+                           10.0
+                           11.0 |]
+                        [| 12.0
+                           13.0
+                           14.0 |] |] |]
+
+              let result = Anova.twoWayANOVA Anova.TwoWayAnovaModel.Fixed samples
+
+              // For balanced two-way ANOVA: Total SS should be close to sum of components
+              // Total ≈ Factor1 + Factor2 + Interaction + Error
+              let sumComponents =
+                  result.FactorFst.SumOfSquares
+                  + result.FactorSnd.SumOfSquares
+                  + result.Interaction.SumOfSquares
+                  + result.Error.SumOfSquares
+
+              Expect.floatClose
+                  Accuracy.low
+                  result.Total.SumOfSquares
+                  sumComponents
+                  "Total SS should approximately equal sum of components"
+
+          // Type creation tests
+          testCase "createAnovaVariationSource"
+          <| fun () ->
+              let source =
+                  Anova.createAnovaVariationSource 5.0 10.0 0.05 Anova.VariationSource.BetweenGroups 3.5 50.0
+
+              Expect.floatClose Accuracy.high source.DegreesOfFreedom 5.0 "DoF should match"
+              Expect.floatClose Accuracy.high source.MeanSquares 10.0 "MeanSquares should match"
+              Expect.floatClose Accuracy.high source.Significance 0.05 "Significance should match"
+              Expect.equal source.Source Anova.VariationSource.BetweenGroups "Source should match"
+              Expect.floatClose Accuracy.high source.Statistic 3.5 "Statistic should match"
+              Expect.floatClose Accuracy.high source.SumOfSquares 50.0 "SumOfSquares should match"
+
+          testCase "createOneWayAnovaVariationSources"
+          <| fun () ->
+              let factor =
+                  Anova.createAnovaVariationSource 2.0 15.0 0.01 Anova.VariationSource.BetweenGroups 5.0 30.0
+              let error =
+                  Anova.createAnovaVariationSource 12.0 3.0 nan Anova.VariationSource.WithinGroups nan 36.0
+              let total =
+                  Anova.createAnovaVariationSource 14.0 4.7 nan Anova.VariationSource.Total nan 66.0
+
+              let result = Anova.createOneWayAnovaVariationSources factor error total
+
+              Expect.floatClose
+                  Accuracy.high
+                  result.Factor.DegreesOfFreedom
+                  factor.DegreesOfFreedom
+                  "Factor DoF should match"
+              Expect.floatClose
+                  Accuracy.high
+                  result.Error.DegreesOfFreedom
+                  error.DegreesOfFreedom
+                  "Error DoF should match"
+              Expect.floatClose
+                  Accuracy.high
+                  result.Total.DegreesOfFreedom
+                  total.DegreesOfFreedom
+                  "Total DoF should match"
+              Expect.equal result.Factor.Source factor.Source "Factor source should match"
+              Expect.equal result.Error.Source error.Source "Error source should match"
+              Expect.equal result.Total.Source total.Source "Total source should match"
+
+          testCase "createTwoWayAnovaVariationSources"
+          <| fun () ->
+              let ffst =
+                  Anova.createAnovaVariationSource 1.0 10.0 0.05 Anova.VariationSource.Residual 2.5 10.0
+              let fsnd =
+                  Anova.createAnovaVariationSource 1.0 20.0 0.03 Anova.VariationSource.Residual 5.0 20.0
+              let inter =
+                  Anova.createAnovaVariationSource 1.0 5.0 0.15 Anova.VariationSource.BetweenGroups 1.25 5.0
+              let error =
+                  Anova.createAnovaVariationSource 8.0 4.0 nan Anova.VariationSource.WithinGroups nan 32.0
+              let cells =
+                  Anova.createAnovaVariationSource 3.0 nan nan Anova.VariationSource.WithinGroups nan 35.0
+              let total =
+                  Anova.createAnovaVariationSource 11.0 nan nan Anova.VariationSource.WithinGroups nan 67.0
+
+              let result =
+                  Anova.createTwoWayAnovaVariationSources ffst fsnd inter error cells total
+
+              Expect.floatClose
+                  Accuracy.high
+                  result.FactorFst.DegreesOfFreedom
+                  ffst.DegreesOfFreedom
+                  "FactorFst DoF should match"
+              Expect.floatClose
+                  Accuracy.high
+                  result.FactorSnd.DegreesOfFreedom
+                  fsnd.DegreesOfFreedom
+                  "FactorSnd DoF should match"
+              Expect.floatClose
+                  Accuracy.high
+                  result.Interaction.DegreesOfFreedom
+                  inter.DegreesOfFreedom
+                  "Interaction DoF should match"
+              Expect.equal result.FactorFst.Source ffst.Source "FactorFst source should match"
+              Expect.equal result.FactorSnd.Source fsnd.Source "FactorSnd source should match"
+              Expect.equal result.Interaction.Source inter.Source "Interaction source should match" ]
