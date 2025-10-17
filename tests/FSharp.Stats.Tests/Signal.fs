@@ -3,6 +3,7 @@ module SignalTests
 
 open Expecto
 open System
+open System.Numerics
 open FSharp.Stats
 open FSharp.Stats.Signal
 open FSharp.Stats.Signal.Padding.Discrete
@@ -982,15 +983,31 @@ let peakDetectionTests =
 
     testList
         "Signal.PeakDetectionTests"
-        [
-          testList
+        [ testList
               "localMaxima"
-              [
-                testCase "finds single peak in simple data"
+              [ testCase "finds single peak in simple data"
                 <| fun () ->
                     // Algorithm needs at least 6 points and checks i-2, i-1, i, i+1, i+2
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
-                    let yData = [| 1.0; 2.0; 3.0; 4.0; 5.0; 4.0; 3.0; 2.0; 1.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0 |]
+                    let yData =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           4.0
+                           3.0
+                           2.0
+                           1.0 |]
 
                     let peaks = PeakDetection.localMaxima 2.0 xData yData
 
@@ -1000,8 +1017,32 @@ let peakDetectionTests =
 
                 testCase "finds multiple peaks"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0; 9.0; 10.0; 11.0 |]
-                    let yData = [| 1.0; 2.0; 3.0; 5.0; 3.0; 2.0; 1.0; 2.0; 3.0; 6.0; 3.0; 1.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0
+                           9.0
+                           10.0
+                           11.0 |]
+                    let yData =
+                        [| 1.0
+                           2.0
+                           3.0
+                           5.0
+                           3.0
+                           2.0
+                           1.0
+                           2.0
+                           3.0
+                           6.0
+                           3.0
+                           1.0 |]
 
                     let peaks = PeakDetection.localMaxima 2.0 xData yData
 
@@ -1009,8 +1050,26 @@ let peakDetectionTests =
 
                 testCase "respects yThreshold"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
-                    let yData = [| 1.0; 2.0; 3.0; 2.0; 1.0; 2.0; 4.0; 2.0; 1.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0 |]
+                    let yData =
+                        [| 1.0
+                           2.0
+                           3.0
+                           2.0
+                           1.0
+                           2.0
+                           4.0
+                           2.0
+                           1.0 |]
 
                     // With threshold 3.5, only second peak should be found
                     let peaks = PeakDetection.localMaxima 3.5 xData yData
@@ -1020,21 +1079,43 @@ let peakDetectionTests =
 
                 testCase "returns empty for too small data"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0 |]
-                    let yData = [| 1.0; 2.0; 1.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0 |]
+                    let yData =
+                        [| 1.0
+                           2.0
+                           1.0 |]
 
                     let peaks = PeakDetection.localMaxima 0.0 xData yData
 
-                    Expect.equal peaks.Length 0 "Should return empty for data with 5 or fewer points"
-              ]
+                    Expect.equal peaks.Length 0 "Should return empty for data with 5 or fewer points" ]
 
           testList
               "localMaximaIdx"
-              [
-                testCase "finds indices of peaks"
+              [ testCase "finds indices of peaks"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
-                    let yData = [| 1.0; 2.0; 3.0; 4.0; 5.0; 4.0; 3.0; 2.0; 1.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0 |]
+                    let yData =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           4.0
+                           3.0
+                           2.0
+                           1.0 |]
 
                     let peakIndices = PeakDetection.localMaximaIdx 2.0 xData yData
 
@@ -1043,22 +1124,44 @@ let peakDetectionTests =
 
                 testCase "returns empty for too small data"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0 |]
-                    let yData = [| 1.0; 2.0; 1.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0 |]
+                    let yData =
+                        [| 1.0
+                           2.0
+                           1.0 |]
 
                     let peaks = PeakDetection.localMaximaIdx 0.0 xData yData
 
-                    Expect.equal peaks.Length 0 "Should return empty for small data"
-              ]
+                    Expect.equal peaks.Length 0 "Should return empty for small data" ]
 
           testList
               "localMinima"
-              [
-                testCase "finds single valley in simple data"
+              [ testCase "finds single valley in simple data"
                 <| fun () ->
                     // Algorithm needs at least 6 points and checks i-2, i-1, i, i+1, i+2
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
-                    let yData = [| 5.0; 5.0; 4.0; 3.0; 1.0; 3.0; 4.0; 5.0; 6.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0 |]
+                    let yData =
+                        [| 5.0
+                           5.0
+                           4.0
+                           3.0
+                           1.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0 |]
 
                     let minima = PeakDetection.localMinima xData yData
 
@@ -1068,8 +1171,32 @@ let peakDetectionTests =
 
                 testCase "finds multiple minima"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0; 9.0; 10.0; 11.0 |]
-                    let yData = [| 5.0; 4.0; 3.0; 1.0; 3.0; 4.0; 5.0; 4.0; 3.0; 0.5; 3.0; 5.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0
+                           9.0
+                           10.0
+                           11.0 |]
+                    let yData =
+                        [| 5.0
+                           4.0
+                           3.0
+                           1.0
+                           3.0
+                           4.0
+                           5.0
+                           4.0
+                           3.0
+                           0.5
+                           3.0
+                           5.0 |]
 
                     let minima = PeakDetection.localMinima xData yData
 
@@ -1077,35 +1204,65 @@ let peakDetectionTests =
 
                 testCase "returns empty for too small data"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0 |]
-                    let yData = [| 3.0; 1.0; 3.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0 |]
+                    let yData =
+                        [| 3.0
+                           1.0
+                           3.0 |]
 
                     let minima = PeakDetection.localMinima xData yData
 
-                    Expect.equal minima.Length 0 "Should return empty for small data"
-              ]
+                    Expect.equal minima.Length 0 "Should return empty for small data" ]
 
           testList
               "localMinimaIdx"
-              [
-                testCase "finds indices of minima"
+              [ testCase "finds indices of minima"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
-                    let yData = [| 5.0; 5.0; 4.0; 3.0; 1.0; 3.0; 4.0; 5.0; 6.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0 |]
+                    let yData =
+                        [| 5.0
+                           5.0
+                           4.0
+                           3.0
+                           1.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0 |]
 
                     let minimaIndices = PeakDetection.localMinimaIdx xData yData
 
                     Expect.equal minimaIndices.Length 1 "Should find one minimum"
-                    Expect.equal minimaIndices.[0] 4 "Minimum should be at index 4"
-              ]
+                    Expect.equal minimaIndices.[0] 4 "Minimum should be at index 4" ]
 
           testList
               "idxOfHighestPeakBy"
-              [
-                testCase "finds highest peak flanking target x-value"
+              [ testCase "finds highest peak flanking target x-value"
                 <| fun () ->
-                    let xData = [| 1.0; 2.0; 3.0; 4.0; 5.0 |]
-                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+                    let xData =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0 |]
+                    let yData =
+                        [| 2.0
+                           5.0
+                           3.0
+                           6.0
+                           2.0 |]
 
                     let idx = PeakDetection.idxOfHighestPeakBy xData yData 3.5
 
@@ -1114,8 +1271,18 @@ let peakDetectionTests =
 
                 testCase "handles target before first value"
                 <| fun () ->
-                    let xData = [| 1.0; 2.0; 3.0; 4.0; 5.0 |]
-                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+                    let xData =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0 |]
+                    let yData =
+                        [| 2.0
+                           5.0
+                           3.0
+                           6.0
+                           2.0 |]
 
                     let idx = PeakDetection.idxOfHighestPeakBy xData yData 0.5
 
@@ -1124,22 +1291,40 @@ let peakDetectionTests =
 
                 testCase "handles target after last value"
                 <| fun () ->
-                    let xData = [| 1.0; 2.0; 3.0; 4.0; 5.0 |]
-                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+                    let xData =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0 |]
+                    let yData =
+                        [| 2.0
+                           5.0
+                           3.0
+                           6.0
+                           2.0 |]
 
                     let idx = PeakDetection.idxOfHighestPeakBy xData yData 6.0
 
                     // Should return last index
-                    Expect.equal idx 4 "Should return last index for target after end"
-              ]
+                    Expect.equal idx 4 "Should return last index for target after end" ]
 
           testList
               "idxOfClosestPeakBy"
-              [
-                testCase "finds closest peak to target x-value"
+              [ testCase "finds closest peak to target x-value"
                 <| fun () ->
-                    let xData = [| 1.0; 3.0; 5.0; 7.0; 9.0 |]
-                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+                    let xData =
+                        [| 1.0
+                           3.0
+                           5.0
+                           7.0
+                           9.0 |]
+                    let yData =
+                        [| 2.0
+                           5.0
+                           3.0
+                           6.0
+                           2.0 |]
 
                     let idx = PeakDetection.idxOfClosestPeakBy xData yData 6.5
 
@@ -1148,8 +1333,18 @@ let peakDetectionTests =
 
                 testCase "handles exact match"
                 <| fun () ->
-                    let xData = [| 1.0; 3.0; 5.0; 7.0; 9.0 |]
-                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+                    let xData =
+                        [| 1.0
+                           3.0
+                           5.0
+                           7.0
+                           9.0 |]
+                    let yData =
+                        [| 2.0
+                           5.0
+                           3.0
+                           6.0
+                           2.0 |]
 
                     let idx = PeakDetection.idxOfClosestPeakBy xData yData 5.0
 
@@ -1162,29 +1357,62 @@ let peakDetectionTests =
 
                     let idx = PeakDetection.idxOfClosestPeakBy xData yData 5.0
 
-                    Expect.equal idx 0 "Should return 0 for empty array"
-              ]
+                    Expect.equal idx 0 "Should return 0 for empty array" ]
 
           testList
               "labelPeaks"
-              [
-                testCase "labels both positive and negative peaks"
+              [ testCase "labels both positive and negative peaks"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
-                    let yData = [| 1.0; 2.0; 5.0; 2.0; 0.5; 2.0; 6.0; 2.0; 1.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0 |]
+                    let yData =
+                        [| 1.0
+                           2.0
+                           5.0
+                           2.0
+                           0.5
+                           2.0
+                           6.0
+                           2.0
+                           1.0 |]
 
                     let labeled = PeakDetection.labelPeaks 1.0 3.0 xData yData
 
                     Expect.equal labeled.Length xData.Length "Should return labeled data for all points"
 
                     // Check that we have positive peaks
-                    let positivePeaks = labeled |> Array.filter (fun x -> x.Meta = PeakDetection.Extrema.Positive)
+                    let positivePeaks =
+                        labeled |> Array.filter (fun x -> x.Meta = PeakDetection.Extrema.Positive)
                     Expect.isGreaterThan positivePeaks.Length 0 "Should find positive peaks"
 
                 testCase "returns None for edge points"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0 |]
-                    let yData = [| 10.0; 2.0; 5.0; 2.0; 10.0; 2.0; 5.0; 2.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0 |]
+                    let yData =
+                        [| 10.0
+                           2.0
+                           5.0
+                           2.0
+                           10.0
+                           2.0
+                           5.0
+                           2.0 |]
 
                     let labeled = PeakDetection.labelPeaks 1.0 3.0 xData yData
 
@@ -1195,20 +1423,31 @@ let peakDetectionTests =
 
                 testCase "returns empty for too small data"
                 <| fun () ->
-                    let xData = [| 0.0; 1.0; 2.0 |]
-                    let yData = [| 1.0; 5.0; 1.0 |]
+                    let xData =
+                        [| 0.0
+                           1.0
+                           2.0 |]
+                    let yData =
+                        [| 1.0
+                           5.0
+                           1.0 |]
 
                     let labeled = PeakDetection.labelPeaks 1.0 3.0 xData yData
 
-                    Expect.equal labeled.Length 0 "Should return empty for small data"
-              ]
+                    Expect.equal labeled.Length 0 "Should return empty for small data" ]
 
           testList
               "iterUntil"
-              [
-                testCase "finds first matching element forward"
+              [ testCase "finds first matching element forward"
                 <| fun () ->
-                    let data = [| 1; 2; 3; 4; 5; 6; 7 |]
+                    let data =
+                        [| 1
+                           2
+                           3
+                           4
+                           5
+                           6
+                           7 |]
 
                     let result = PeakDetection.iterUntil (fun x -> x > 5) 1 2 data
 
@@ -1216,7 +1455,14 @@ let peakDetectionTests =
 
                 testCase "finds first matching element backward"
                 <| fun () ->
-                    let data = [| 1; 2; 3; 4; 5; 6; 7 |]
+                    let data =
+                        [| 1
+                           2
+                           3
+                           4
+                           5
+                           6
+                           7 |]
 
                     let result = PeakDetection.iterUntil (fun x -> x < 3) -1 5 data
 
@@ -1224,7 +1470,12 @@ let peakDetectionTests =
 
                 testCase "returns None when reaching end"
                 <| fun () ->
-                    let data = [| 1; 2; 3; 4; 5 |]
+                    let data =
+                        [| 1
+                           2
+                           3
+                           4
+                           5 |]
 
                     let result = PeakDetection.iterUntil (fun x -> x > 10) 1 2 data
 
@@ -1232,35 +1483,443 @@ let peakDetectionTests =
 
                 testCase "returns None when reaching start"
                 <| fun () ->
-                    let data = [| 1; 2; 3; 4; 5 |]
+                    let data =
+                        [| 1
+                           2
+                           3
+                           4
+                           5 |]
 
                     let result = PeakDetection.iterUntil (fun x -> x < 0) -1 3 data
 
-                    Expect.equal result None "Should return None when reaching start"
-              ]
+                    Expect.equal result None "Should return None when reaching start" ]
 
           testList
               "iterUntili"
-              [
-                testCase "passes index to predicate"
+              [ testCase "passes index to predicate"
                 <| fun () ->
-                    let data = [| 10; 20; 30; 40; 50 |]
+                    let data =
+                        [| 10
+                           20
+                           30
+                           40
+                           50 |]
 
                     // Find first index >= 2 where value > 25
                     let result = PeakDetection.iterUntili (fun i x -> x > 25) 1 2 data
 
-                    Expect.equal result (Some 2) "Should find index 2 where value=30 > 25"
-              ]
+                    Expect.equal result (Some 2) "Should find index 2 where value=30 > 25" ]
 
           testList
               "createPeakFeature"
-              [
-                testCase "creates peak feature with all fields"
+              [ testCase "creates peak feature with all fields"
                 <| fun () ->
                     let peak = PeakDetection.createPeakFeature 5 10.0 20.0
 
                     Expect.equal peak.Index 5 "Index should be 5"
                     Expect.equal peak.XVal 10.0 "XVal should be 10.0"
-                    Expect.equal peak.YVal 20.0 "YVal should be 20.0"
-              ]
-        ]
+                    Expect.equal peak.YVal 20.0 "YVal should be 20.0" ] ]
+[<Tests>]
+let fftTests =
+    testList
+        "Signal.FFTTests"
+        [ testList
+              "forwardInPlace and inverseInPlace - round trip"
+              [ testCase "power-of-2 size (8 elements)"
+                <| fun () ->
+                    let original = [| for i in 0..7 -> Complex(float i, 0.0) |]
+                    let data = Array.copy original
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    // After forward+inverse, result is scaled by N, so divide by N
+                    for i in 0..7 do
+                        Expect.floatClose
+                            Accuracy.high
+                            (data.[i].Real / float n)
+                            original.[i].Real
+                            $"Real part at index {i} should match after round trip"
+                        Expect.floatClose
+                            Accuracy.high
+                            (data.[i].Imaginary / float n)
+                            0.0
+                            $"Imaginary part at index {i} should be near zero"
+
+                testCase "power-of-2 size (16 elements)"
+                <| fun () ->
+                    let original = [| for i in 0..15 -> Complex(float i * 0.5, 0.0) |]
+                    let data = Array.copy original
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    for i in 0..15 do
+                        Expect.floatClose
+                            Accuracy.high
+                            (data.[i].Real / float n)
+                            original.[i].Real
+                            "Real part should match after round trip"
+
+                testCase "non-power-of-2 size (10 elements - uses Bluestein)"
+                <| fun () ->
+                    let original = [| for i in 0..9 -> Complex(float i, 0.0) |]
+                    let data = Array.copy original
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    for i in 0..9 do
+                        Expect.floatClose
+                            Accuracy.high
+                            (data.[i].Real / float n)
+                            original.[i].Real
+                            "Real part should match after round trip (Bluestein)"
+
+                testCase "non-power-of-2 size (7 elements)"
+                <| fun () ->
+                    let original = [| for i in 0..6 -> Complex(float (i + 1), 0.0) |]
+                    let data = Array.copy original
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    for i in 0..6 do
+                        Expect.floatClose
+                            Accuracy.low
+                            (data.[i].Real / float n)
+                            original.[i].Real
+                            "Real part should match after round trip" ]
+
+          testList
+              "FFT properties"
+              [ testCase "DC component (zero frequency) equals sum of input"
+                <| fun () ->
+                    // DC component (first element) should equal sum of all inputs
+                    let input =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0
+                           8.0 |]
+                    let data = input |> Array.map (fun x -> Complex(x, 0.0))
+
+                    FFT.forwardInPlace data |> ignore
+
+                    let expectedDC = Array.sum input
+                    Expect.floatClose Accuracy.high data.[0].Real expectedDC "DC component should equal sum of inputs"
+
+                testCase "detects single frequency sine wave"
+                <| fun () ->
+                    // Create a sine wave at a known frequency
+                    let n = 64
+                    let freq = 5.0 // 5 complete cycles in n points
+                    let data =
+                        [| for i in 0 .. n - 1 ->
+                               let t = 2.0 * System.Math.PI * freq * float i / float n
+                               Complex(sin (t), 0.0) |]
+
+                    FFT.forwardInPlace data |> ignore
+
+                    // The magnitude should peak at frequency 5 and n-5 (symmetry)
+                    let magnitudes = data |> Array.map (fun c -> c.Magnitude)
+                    let maxMagIdx = magnitudes |> Array.indexed |> Array.maxBy snd |> fst
+
+                    // Peak should be at index 5 or 59 (n-5 due to symmetry)
+                    Expect.isTrue
+                        (maxMagIdx = 5 || maxMagIdx = n - 5)
+                        $"Peak should be at frequency index 5 or {n - 5}, but was at {maxMagIdx}"
+
+                testCase "constant signal has only DC component"
+                <| fun () ->
+                    let constantValue = 5.0
+                    let data = Array.create 16 (Complex(constantValue, 0.0))
+
+                    FFT.forwardInPlace data |> ignore
+
+                    // DC component should be n * constant
+                    Expect.floatClose
+                        Accuracy.high
+                        data.[0].Real
+                        (16.0 * constantValue)
+                        "DC component should be n * constant"
+
+                    // All other components should be near zero
+                    for i in 1..15 do
+                        Expect.isLessThan data.[i].Magnitude 1e-10 $"Non-DC component at index {i} should be near zero" ]
+
+          testList
+              "Parseval's theorem (energy conservation)"
+              [ testCase "energy is conserved (power-of-2)"
+                <| fun () ->
+                    // Parseval's theorem: sum of squares in time domain
+                    // equals sum of squares of magnitudes in frequency domain (divided by N)
+                    let input =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           3.0
+                           2.0
+                           1.0
+                           0.0 |]
+                    let data = input |> Array.map (fun x -> Complex(x, 0.0))
+
+                    let timeDomainEnergy = input |> Array.sumBy (fun x -> x * x)
+
+                    FFT.forwardInPlace data |> ignore
+
+                    let freqDomainEnergy =
+                        data
+                        |> Array.sumBy (fun c -> c.Magnitude * c.Magnitude)
+                        |> fun x -> x / float data.Length
+
+                    Expect.floatClose
+                        Accuracy.low
+                        timeDomainEnergy
+                        freqDomainEnergy
+                        "Energy should be conserved (Parseval's theorem)"
+
+                testCase "energy is conserved (non-power-of-2)"
+                <| fun () ->
+                    let input =
+                        [| 1.0
+                           3.0
+                           2.0
+                           4.0
+                           2.0 |]
+                    let data = input |> Array.map (fun x -> Complex(x, 0.0))
+
+                    let timeDomainEnergy = input |> Array.sumBy (fun x -> x * x)
+
+                    FFT.forwardInPlace data |> ignore
+
+                    let freqDomainEnergy =
+                        data
+                        |> Array.sumBy (fun c -> c.Magnitude * c.Magnitude)
+                        |> fun x -> x / float data.Length
+
+                    Expect.floatClose
+                        Accuracy.low
+                        timeDomainEnergy
+                        freqDomainEnergy
+                        "Energy should be conserved for non-power-of-2" ]
+
+          testList
+              "scaling functions"
+              [ testCase "asymmetricScalingInPlace does nothing"
+                <| fun () ->
+                    let input =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0 |]
+                    let original = Array.copy input
+
+                    let result = FFT.asymmetricScalingInPlace input
+
+                    Expect.equal result.Length original.Length "Length should be unchanged"
+                    for i in 0 .. input.Length - 1 do
+                        Expect.equal input.[i] original.[i] "Asymmetric scaling should not modify data"
+
+                testCase "symmetricScalingInPlace scales by 1/sqrt(N)"
+                <| fun () ->
+                    let input =
+                        [| 4.0
+                           8.0
+                           12.0
+                           16.0 |]
+                    let n = input.Length
+                    let scaleFactor = 1.0 / sqrt (float n)
+
+                    let result = FFT.symmetricScalingInPlace input
+
+                    for i in 0 .. n - 1 do
+                        let expected =
+                            [| 4.0
+                               8.0
+                               12.0
+                               16.0 |].[i]
+                            * scaleFactor
+                        Expect.floatClose
+                            Accuracy.high
+                            input.[i]
+                            expected
+                            $"Symmetric scaling should scale by 1/sqrt(N) at index {i}"
+
+                testCase "inverseAsymmetricScalingInPlace scales by 1/sqrt(N)"
+                <| fun () ->
+                    let input =
+                        [| 10.0
+                           20.0
+                           30.0
+                           40.0
+                           50.0 |]
+                    let n = input.Length
+                    let scaleFactor = 1.0 / sqrt (float n)
+
+                    FFT.inverseAsymmetricScalingInPlace input |> ignore
+
+                    for i in 0 .. n - 1 do
+                        let expected =
+                            [| 10.0
+                               20.0
+                               30.0
+                               40.0
+                               50.0 |].[i]
+                            * scaleFactor
+                        Expect.floatClose
+                            Accuracy.high
+                            input.[i]
+                            expected
+                            "Inverse asymmetric scaling should scale by 1/sqrt(N)"
+
+                testCase "inverseSymmetricScalingInPlace scales by 1/N"
+                <| fun () ->
+                    let input =
+                        [| 8.0
+                           16.0
+                           24.0
+                           32.0 |]
+                    let n = input.Length
+                    let scaleFactor = 1.0 / float n
+
+                    FFT.inverseSymmetricScalingInPlace input |> ignore
+
+                    for i in 0 .. n - 1 do
+                        let expected =
+                            [| 8.0
+                               16.0
+                               24.0
+                               32.0 |].[i]
+                            * scaleFactor
+                        Expect.floatClose
+                            Accuracy.high
+                            input.[i]
+                            expected
+                            "Inverse symmetric scaling should scale by 1/N"
+
+                testCase "scaling functions return the array"
+                <| fun () ->
+                    let input =
+                        [| 1.0
+                           2.0
+                           3.0 |]
+                    let result1 = FFT.asymmetricScalingInPlace input
+                    Expect.equal (result1 = input) true "Should return same array reference"
+
+                    let input2 =
+                        [| 1.0
+                           2.0
+                           3.0 |]
+                    let result2 = FFT.symmetricScalingInPlace input2
+                    Expect.equal (result2 = input2) true "Should return same array reference" ]
+
+          testList
+              "edge cases"
+              [ testCase "single element array"
+                <| fun () ->
+                    let data = [| Complex(5.0, 0.0) |]
+                    let original = Array.copy data
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    Expect.floatClose
+                        Accuracy.high
+                        (data.[0].Real / float n)
+                        original.[0].Real
+                        "Single element should be unchanged after round trip"
+
+                testCase "two element array (power-of-2)"
+                <| fun () ->
+                    let data =
+                        [| Complex(3.0, 0.0)
+                           Complex(7.0, 0.0) |]
+                    let original = Array.copy data
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    for i in 0..1 do
+                        Expect.floatClose
+                            Accuracy.high
+                            (data.[i].Real / float n)
+                            original.[i].Real
+                            "Two element FFT should work"
+
+                testCase "complex input with imaginary parts"
+                <| fun () ->
+                    let data =
+                        [| Complex(1.0, 2.0)
+                           Complex(3.0, 4.0)
+                           Complex(5.0, 6.0)
+                           Complex(7.0, 8.0) |]
+                    let original = Array.copy data
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    for i in 0..3 do
+                        Expect.floatClose
+                            Accuracy.high
+                            (data.[i].Real / float n)
+                            original.[i].Real
+                            "Real part should be preserved with complex input"
+                        Expect.floatClose
+                            Accuracy.high
+                            (data.[i].Imaginary / float n)
+                            original.[i].Imaginary
+                            "Imaginary part should be preserved with complex input"
+
+                testCase "zero array"
+                <| fun () ->
+                    let data = Array.create 8 Complex.Zero
+
+                    FFT.forwardInPlace data |> ignore
+
+                    for i in 0..7 do
+                        Expect.floatClose Accuracy.high data.[i].Magnitude 0.0 "FFT of zeros should be zeros"
+
+                testCase "large power-of-2 (32 elements)"
+                <| fun () ->
+                    let original = [| for i in 0..31 -> Complex(sin (float i * 0.5), 0.0) |]
+                    let data = Array.copy original
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    for i in 0..31 do
+                        Expect.floatClose
+                            Accuracy.high
+                            (data.[i].Real / float n)
+                            original.[i].Real
+                            "Large array should work correctly"
+
+                testCase "prime number size (13 elements - uses Bluestein)"
+                <| fun () ->
+                    let original = [| for i in 0..12 -> Complex(float i * 0.3, 0.0) |]
+                    let data = Array.copy original
+                    let n = data.Length
+
+                    FFT.forwardInPlace data |> ignore
+                    FFT.inverseInPlace data |> ignore
+
+                    for i in 0..12 do
+                        Expect.floatClose
+                            Accuracy.low
+                            (data.[i].Real / float n)
+                            original.[i].Real
+                            "Prime size should work with Bluestein algorithm" ] ]
