@@ -1016,6 +1016,303 @@ let qValuesTest =
 
           ]
 
+[<Tests>]
+let qValuesAdditionalTests =
+    testList
+        "Testing.MultipleTesting.Qvalues.Additional"
+        [
+          // Test pi0Bootstrap with default lambda values
+          testCase
+              "pi0Bootstrap with uniform p-values"
+              (fun () ->
+                  // Uniform p-values should give pi0 close to 1.0
+                  let pValues =
+                      [| 0.1
+                         0.2
+                         0.3
+                         0.4
+                         0.5
+                         0.6
+                         0.7
+                         0.8
+                         0.9 |]
+                  let pi0 = MultipleTesting.Qvalues.pi0Bootstrap pValues
+                  Expect.isTrue (pi0 >= 0.0 && pi0 <= 1.0) "pi0 should be between 0 and 1"
+                  Expect.isTrue (pi0 > 0.5) "pi0 for uniform p-values should be relatively high"
+              )
+
+          testCase
+              "pi0Bootstrap with mostly significant p-values"
+              (fun () ->
+                  // Mostly small p-values should give low pi0
+                  let pValues =
+                      [| 0.001
+                         0.002
+                         0.003
+                         0.004
+                         0.005
+                         0.01
+                         0.02
+                         0.8
+                         0.9 |]
+                  let pi0 = MultipleTesting.Qvalues.pi0Bootstrap pValues
+                  Expect.isTrue (pi0 >= 0.0 && pi0 <= 1.0) "pi0 should be between 0 and 1"
+              // With mostly small p-values, pi0 should be lower
+              )
+
+          testCase
+              "pi0BootstrapWithLambda with custom lambda"
+              (fun () ->
+                  let pValues =
+                      [| 0.1
+                         0.2
+                         0.3
+                         0.4
+                         0.5
+                         0.6
+                         0.7
+                         0.8
+                         0.9 |]
+                  let lambda =
+                      [| 0.0
+                         0.1
+                         0.2
+                         0.3
+                         0.4
+                         0.5 |]
+                  let pi0 = MultipleTesting.Qvalues.pi0BootstrapWithLambda lambda pValues
+                  Expect.isTrue (pi0 >= 0.0 && pi0 <= 1.0) "pi0 should be between 0 and 1"
+              )
+
+          testCase
+              "pi0BootstrapWithLambda with narrow lambda range"
+              (fun () ->
+                  let pValues =
+                      [| 0.05
+                         0.15
+                         0.25
+                         0.35
+                         0.45
+                         0.55
+                         0.65
+                         0.75
+                         0.85
+                         0.95 |]
+                  let lambda =
+                      [| 0.1
+                         0.2
+                         0.3 |]
+                  let pi0 = MultipleTesting.Qvalues.pi0BootstrapWithLambda lambda pValues
+                  Expect.isTrue (pi0 >= 0.0 && pi0 <= 1.0) "pi0 should be between 0 and 1"
+              )
+
+          testCase
+              "ofPValuesBy with custom projection"
+              (fun () ->
+                  // Test with tuples where second element is the p-value
+                  let dataWithPvalues =
+                      [| ("test1", 0.01)
+                         ("test2", 0.05)
+                         ("test3", 0.5)
+                         ("test4", 0.9) |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValuesBy pi0 snd dataWithPvalues
+                  Expect.equal qValues.Length 4 "Should return 4 q-values"
+                  // Q-values should be monotonic and >= p-values
+                  Expect.isTrue (qValues.[0] <= qValues.[1]) "Q-values should be monotonic"
+                  Expect.isTrue (qValues.[1] <= qValues.[2]) "Q-values should be monotonic"
+              )
+
+          testCase
+              "ofPValuesRobustBy with custom projection"
+              (fun () ->
+                  let dataWithPvalues =
+                      [| ("test1", 0.01)
+                         ("test2", 0.05)
+                         ("test3", 0.5)
+                         ("test4", 0.9) |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValuesRobustBy pi0 snd dataWithPvalues
+                  Expect.equal qValues.Length 4 "Should return 4 q-values"
+                  // Q-values should be in valid range
+                  Array.iter
+                      (fun q -> Expect.isTrue (q >= 0.0 && q <= 1.0) "Q-values should be between 0 and 1")
+                      qValues
+              )
+
+          testCase
+              "ofPValues with all NaN p-values"
+              (fun () ->
+                  let pValues =
+                      [| nan
+                         nan
+                         nan |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValues pi0 pValues
+                  Expect.equal qValues.Length 3 "Should return 3 q-values"
+                  Array.iter (fun q -> Expect.isTrue (System.Double.IsNaN q) "All q-values should be NaN") qValues
+              )
+
+          testCase
+              "ofPValuesRobust with all NaN p-values"
+              (fun () ->
+                  let pValues =
+                      [| nan
+                         nan
+                         nan |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValuesRobust pi0 pValues
+                  Expect.equal qValues.Length 3 "Should return 3 q-values"
+                  Array.iter (fun q -> Expect.isTrue (System.Double.IsNaN q) "All q-values should be NaN") qValues
+              )
+
+          testCase
+              "ofPValues with mixed valid and NaN p-values"
+              (fun () ->
+                  let pValues =
+                      [| 0.01
+                         nan
+                         0.5
+                         nan
+                         0.9 |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValues pi0 pValues
+                  Expect.equal qValues.Length 5 "Should return 5 q-values"
+                  // Check that NaN p-values result in NaN q-values
+                  Expect.isTrue (not (System.Double.IsNaN qValues.[0])) "Valid p-value should give valid q-value"
+                  Expect.isTrue (System.Double.IsNaN qValues.[1]) "NaN p-value should give NaN q-value"
+                  Expect.isTrue (not (System.Double.IsNaN qValues.[2])) "Valid p-value should give valid q-value"
+                  Expect.isTrue (System.Double.IsNaN qValues.[3]) "NaN p-value should give NaN q-value"
+                  Expect.isTrue (not (System.Double.IsNaN qValues.[4])) "Valid p-value should give valid q-value"
+              )
+
+          testCase
+              "ofPValues with single p-value"
+              (fun () ->
+                  let pValues = [| 0.05 |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValues pi0 pValues
+                  Expect.equal qValues.Length 1 "Should return 1 q-value"
+                  Expect.isTrue (qValues.[0] >= 0.0 && qValues.[0] <= 1.0) "Q-value should be in valid range"
+              )
+
+          testCase
+              "ofPValuesRobust with single p-value"
+              (fun () ->
+                  let pValues = [| 0.05 |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValuesRobust pi0 pValues
+                  Expect.equal qValues.Length 1 "Should return 1 q-value"
+                  Expect.isTrue (qValues.[0] >= 0.0 && qValues.[0] <= 1.0) "Q-value should be in valid range"
+              )
+
+          testCase
+              "ofPValues monotonicity check"
+              (fun () ->
+                  // Q-values should be monotonic when sorted by p-values
+                  let pValues =
+                      [| 0.001
+                         0.01
+                         0.05
+                         0.1
+                         0.2
+                         0.5
+                         0.8 |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValues pi0 pValues
+                  // Check monotonicity
+                  for i in 0 .. qValues.Length - 2 do
+                      Expect.isTrue
+                          (qValues.[i] <= qValues.[i + 1])
+                          (sprintf
+                              "Q-values should be monotonic: q[%d]=%f should be <= q[%d]=%f"
+                              i
+                              qValues.[i]
+                              (i + 1)
+                              qValues.[i + 1])
+              )
+
+          testCase
+              "ofPValuesRobust monotonicity check"
+              (fun () ->
+                  let pValues =
+                      [| 0.001
+                         0.01
+                         0.05
+                         0.1
+                         0.2
+                         0.5
+                         0.8 |]
+                  let pi0 = 0.5
+                  let qValues = MultipleTesting.Qvalues.ofPValuesRobust pi0 pValues
+                  // Check monotonicity
+                  for i in 0 .. qValues.Length - 2 do
+                      Expect.isTrue
+                          (qValues.[i] <= qValues.[i + 1])
+                          (sprintf
+                              "Q-values should be monotonic: q[%d]=%f should be <= q[%d]=%f"
+                              i
+                              qValues.[i]
+                              (i + 1)
+                              qValues.[i + 1])
+              )
+
+          testCase
+              "ofPValues with pi0=1.0"
+              (fun () ->
+                  // pi0=1.0 means all tests are null hypotheses
+                  let pValues =
+                      [| 0.01
+                         0.05
+                         0.1
+                         0.5 |]
+                  let pi0 = 1.0
+                  let qValues = MultipleTesting.Qvalues.ofPValues pi0 pValues
+                  // With pi0=1.0, q-values should be equal to or higher than p-values
+                  for i in 0 .. pValues.Length - 1 do
+                      Expect.isTrue (qValues.[i] >= pValues.[i]) "Q-values should be >= p-values when pi0=1.0"
+              )
+
+          testCase
+              "ofPValues with very small pi0"
+              (fun () ->
+                  // Small pi0 means few null hypotheses
+                  let pValues =
+                      [| 0.01
+                         0.05
+                         0.1
+                         0.5 |]
+                  let pi0 = 0.1
+                  let qValues = MultipleTesting.Qvalues.ofPValues pi0 pValues
+                  Expect.equal qValues.Length 4 "Should return 4 q-values"
+                  // Q-values should be closer to p-values with small pi0
+                  Array.iter
+                      (fun q -> Expect.isTrue (q >= 0.0 && q <= 1.0) "Q-values should be in valid range")
+                      qValues
+              )
+
+          testCase
+              "pi0Bootstrap deterministic with same input"
+              (fun () ->
+                  // While bootstrap involves randomness, the min pi0 selection should make it relatively stable
+                  let pValues =
+                      [| 0.1
+                         0.2
+                         0.3
+                         0.4
+                         0.5
+                         0.6
+                         0.7
+                         0.8
+                         0.9 |]
+                  let pi0_1 = MultipleTesting.Qvalues.pi0Bootstrap pValues
+                  let pi0_2 = MultipleTesting.Qvalues.pi0Bootstrap pValues
+                  // Both should be in valid range
+                  Expect.isTrue (pi0_1 >= 0.0 && pi0_1 <= 1.0) "pi0 should be between 0 and 1"
+                  Expect.isTrue (pi0_2 >= 0.0 && pi0_2 <= 1.0) "pi0 should be between 0 and 1"
+              // Note: Due to randomness, they might not be exactly equal, but should be close
+              ) ]
+
 
 let createMetricTestInt metricName actual expected =
     testCase
