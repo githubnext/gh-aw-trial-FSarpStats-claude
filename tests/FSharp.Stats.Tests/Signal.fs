@@ -976,3 +976,291 @@ let filteringTests =
                         let optimalWindow =
                             Signal.Filtering.optimizeWindowWidth polOrder windowsToTest blankSignal signalOfInterest
                         Expect.contains windowsToTest optimalWindow $"Should work with polynomial order {polOrder}" ] ]
+
+[<Tests>]
+let peakDetectionTests =
+
+    testList
+        "Signal.PeakDetectionTests"
+        [
+          testList
+              "localMaxima"
+              [
+                testCase "finds single peak in simple data"
+                <| fun () ->
+                    // Algorithm needs at least 6 points and checks i-2, i-1, i, i+1, i+2
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
+                    let yData = [| 1.0; 2.0; 3.0; 4.0; 5.0; 4.0; 3.0; 2.0; 1.0 |]
+
+                    let peaks = PeakDetection.localMaxima 2.0 xData yData
+
+                    Expect.equal peaks.Length 1 "Should find one peak"
+                    Expect.equal (fst peaks.[0]) 4.0 "Peak should be at x=4.0"
+                    Expect.equal (snd peaks.[0]) 5.0 "Peak should have y=5.0"
+
+                testCase "finds multiple peaks"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0; 9.0; 10.0; 11.0 |]
+                    let yData = [| 1.0; 2.0; 3.0; 5.0; 3.0; 2.0; 1.0; 2.0; 3.0; 6.0; 3.0; 1.0 |]
+
+                    let peaks = PeakDetection.localMaxima 2.0 xData yData
+
+                    Expect.equal peaks.Length 2 "Should find two peaks"
+
+                testCase "respects yThreshold"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
+                    let yData = [| 1.0; 2.0; 3.0; 2.0; 1.0; 2.0; 4.0; 2.0; 1.0 |]
+
+                    // With threshold 3.5, only second peak should be found
+                    let peaks = PeakDetection.localMaxima 3.5 xData yData
+
+                    Expect.equal peaks.Length 1 "Should find one peak above threshold"
+                    Expect.floatClose Accuracy.high (snd peaks.[0]) 4.0 "Found peak should be the higher one"
+
+                testCase "returns empty for too small data"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0 |]
+                    let yData = [| 1.0; 2.0; 1.0 |]
+
+                    let peaks = PeakDetection.localMaxima 0.0 xData yData
+
+                    Expect.equal peaks.Length 0 "Should return empty for data with 5 or fewer points"
+              ]
+
+          testList
+              "localMaximaIdx"
+              [
+                testCase "finds indices of peaks"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
+                    let yData = [| 1.0; 2.0; 3.0; 4.0; 5.0; 4.0; 3.0; 2.0; 1.0 |]
+
+                    let peakIndices = PeakDetection.localMaximaIdx 2.0 xData yData
+
+                    Expect.equal peakIndices.Length 1 "Should find one peak"
+                    Expect.equal peakIndices.[0] 4 "Peak should be at index 4"
+
+                testCase "returns empty for too small data"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0 |]
+                    let yData = [| 1.0; 2.0; 1.0 |]
+
+                    let peaks = PeakDetection.localMaximaIdx 0.0 xData yData
+
+                    Expect.equal peaks.Length 0 "Should return empty for small data"
+              ]
+
+          testList
+              "localMinima"
+              [
+                testCase "finds single valley in simple data"
+                <| fun () ->
+                    // Algorithm needs at least 6 points and checks i-2, i-1, i, i+1, i+2
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
+                    let yData = [| 5.0; 5.0; 4.0; 3.0; 1.0; 3.0; 4.0; 5.0; 6.0 |]
+
+                    let minima = PeakDetection.localMinima xData yData
+
+                    Expect.equal minima.Length 1 "Should find one minimum"
+                    Expect.equal (fst minima.[0]) 4.0 "Minimum should be at x=4.0"
+                    Expect.equal (snd minima.[0]) 1.0 "Minimum should have y=1.0"
+
+                testCase "finds multiple minima"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0; 9.0; 10.0; 11.0 |]
+                    let yData = [| 5.0; 4.0; 3.0; 1.0; 3.0; 4.0; 5.0; 4.0; 3.0; 0.5; 3.0; 5.0 |]
+
+                    let minima = PeakDetection.localMinima xData yData
+
+                    Expect.equal minima.Length 2 "Should find two minima"
+
+                testCase "returns empty for too small data"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0 |]
+                    let yData = [| 3.0; 1.0; 3.0 |]
+
+                    let minima = PeakDetection.localMinima xData yData
+
+                    Expect.equal minima.Length 0 "Should return empty for small data"
+              ]
+
+          testList
+              "localMinimaIdx"
+              [
+                testCase "finds indices of minima"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
+                    let yData = [| 5.0; 5.0; 4.0; 3.0; 1.0; 3.0; 4.0; 5.0; 6.0 |]
+
+                    let minimaIndices = PeakDetection.localMinimaIdx xData yData
+
+                    Expect.equal minimaIndices.Length 1 "Should find one minimum"
+                    Expect.equal minimaIndices.[0] 4 "Minimum should be at index 4"
+              ]
+
+          testList
+              "idxOfHighestPeakBy"
+              [
+                testCase "finds highest peak flanking target x-value"
+                <| fun () ->
+                    let xData = [| 1.0; 2.0; 3.0; 4.0; 5.0 |]
+                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+
+                    let idx = PeakDetection.idxOfHighestPeakBy xData yData 3.5
+
+                    // Should find the highest of the two flanking peaks
+                    Expect.equal idx 3 "Should return index of highest flanking peak"
+
+                testCase "handles target before first value"
+                <| fun () ->
+                    let xData = [| 1.0; 2.0; 3.0; 4.0; 5.0 |]
+                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+
+                    let idx = PeakDetection.idxOfHighestPeakBy xData yData 0.5
+
+                    // Should return first index
+                    Expect.equal idx 0 "Should return first index for target before start"
+
+                testCase "handles target after last value"
+                <| fun () ->
+                    let xData = [| 1.0; 2.0; 3.0; 4.0; 5.0 |]
+                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+
+                    let idx = PeakDetection.idxOfHighestPeakBy xData yData 6.0
+
+                    // Should return last index
+                    Expect.equal idx 4 "Should return last index for target after end"
+              ]
+
+          testList
+              "idxOfClosestPeakBy"
+              [
+                testCase "finds closest peak to target x-value"
+                <| fun () ->
+                    let xData = [| 1.0; 3.0; 5.0; 7.0; 9.0 |]
+                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+
+                    let idx = PeakDetection.idxOfClosestPeakBy xData yData 6.5
+
+                    // 6.5 is closest to 7.0 at index 3
+                    Expect.equal idx 3 "Should return index 3"
+
+                testCase "handles exact match"
+                <| fun () ->
+                    let xData = [| 1.0; 3.0; 5.0; 7.0; 9.0 |]
+                    let yData = [| 2.0; 5.0; 3.0; 6.0; 2.0 |]
+
+                    let idx = PeakDetection.idxOfClosestPeakBy xData yData 5.0
+
+                    Expect.equal idx 2 "Should return exact match index"
+
+                testCase "handles empty array"
+                <| fun () ->
+                    let xData = [||]
+                    let yData = [||]
+
+                    let idx = PeakDetection.idxOfClosestPeakBy xData yData 5.0
+
+                    Expect.equal idx 0 "Should return 0 for empty array"
+              ]
+
+          testList
+              "labelPeaks"
+              [
+                testCase "labels both positive and negative peaks"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0; 8.0 |]
+                    let yData = [| 1.0; 2.0; 5.0; 2.0; 0.5; 2.0; 6.0; 2.0; 1.0 |]
+
+                    let labeled = PeakDetection.labelPeaks 1.0 3.0 xData yData
+
+                    Expect.equal labeled.Length xData.Length "Should return labeled data for all points"
+
+                    // Check that we have positive peaks
+                    let positivePeaks = labeled |> Array.filter (fun x -> x.Meta = PeakDetection.Extrema.Positive)
+                    Expect.isGreaterThan positivePeaks.Length 0 "Should find positive peaks"
+
+                testCase "returns None for edge points"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0; 3.0; 4.0; 5.0; 6.0; 7.0 |]
+                    let yData = [| 10.0; 2.0; 5.0; 2.0; 10.0; 2.0; 5.0; 2.0 |]
+
+                    let labeled = PeakDetection.labelPeaks 1.0 3.0 xData yData
+
+                    // First 3 and last 3 points should be None
+                    Expect.equal labeled.[0].Meta PeakDetection.Extrema.None "First point should be None"
+                    Expect.equal labeled.[1].Meta PeakDetection.Extrema.None "Second point should be None"
+                    Expect.equal labeled.[2].Meta PeakDetection.Extrema.None "Third point should be None"
+
+                testCase "returns empty for too small data"
+                <| fun () ->
+                    let xData = [| 0.0; 1.0; 2.0 |]
+                    let yData = [| 1.0; 5.0; 1.0 |]
+
+                    let labeled = PeakDetection.labelPeaks 1.0 3.0 xData yData
+
+                    Expect.equal labeled.Length 0 "Should return empty for small data"
+              ]
+
+          testList
+              "iterUntil"
+              [
+                testCase "finds first matching element forward"
+                <| fun () ->
+                    let data = [| 1; 2; 3; 4; 5; 6; 7 |]
+
+                    let result = PeakDetection.iterUntil (fun x -> x > 5) 1 2 data
+
+                    Expect.equal result (Some 5) "Should find index 5 (value 6)"
+
+                testCase "finds first matching element backward"
+                <| fun () ->
+                    let data = [| 1; 2; 3; 4; 5; 6; 7 |]
+
+                    let result = PeakDetection.iterUntil (fun x -> x < 3) -1 5 data
+
+                    Expect.equal result (Some 1) "Should find index 1 (value 2)"
+
+                testCase "returns None when reaching end"
+                <| fun () ->
+                    let data = [| 1; 2; 3; 4; 5 |]
+
+                    let result = PeakDetection.iterUntil (fun x -> x > 10) 1 2 data
+
+                    Expect.equal result None "Should return None when no match found"
+
+                testCase "returns None when reaching start"
+                <| fun () ->
+                    let data = [| 1; 2; 3; 4; 5 |]
+
+                    let result = PeakDetection.iterUntil (fun x -> x < 0) -1 3 data
+
+                    Expect.equal result None "Should return None when reaching start"
+              ]
+
+          testList
+              "iterUntili"
+              [
+                testCase "passes index to predicate"
+                <| fun () ->
+                    let data = [| 10; 20; 30; 40; 50 |]
+
+                    // Find first index >= 2 where value > 25
+                    let result = PeakDetection.iterUntili (fun i x -> x > 25) 1 2 data
+
+                    Expect.equal result (Some 2) "Should find index 2 where value=30 > 25"
+              ]
+
+          testList
+              "createPeakFeature"
+              [
+                testCase "creates peak feature with all fields"
+                <| fun () ->
+                    let peak = PeakDetection.createPeakFeature 5 10.0 20.0
+
+                    Expect.equal peak.Index 5 "Index should be 5"
+                    Expect.equal peak.XVal 10.0 "XVal should be 10.0"
+                    Expect.equal peak.YVal 20.0 "YVal should be 20.0"
+              ]
+        ]
