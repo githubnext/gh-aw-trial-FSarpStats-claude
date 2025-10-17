@@ -3,6 +3,12 @@ description: 'Runs build, tests, and generates coverage report for FSharp.Stats'
 runs:
   using: "composite"
   steps:
+    # Step 0: Setup .NET 6.0 SDK (required by the test project)
+    - name: Setup .NET 6.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '6.0.x'
+
     # Step 1: Restore dotnet tools (includes AltCover and other build tools)
     - name: Restore dotnet local tools
       shell: bash
