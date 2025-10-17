@@ -1,4 +1,4 @@
-module SignalTests 
+module SignalTests
 
 
 open Expecto
@@ -11,307 +11,521 @@ open TestExtensions
 
 [<Tests>]
 let outlierTests =
-    let ls = [-1.4; -1.4; -1.3; -7.9; 9.4; -1.5; 5.0; 7.0; 1.1; 1.6]
+    let ls =
+        [ -1.4
+          -1.4
+          -1.3
+          -7.9
+          9.4
+          -1.5
+          5.0
+          7.0
+          1.1
+          1.6 ]
     let m = List.mean ls //1.06
-    
+
     let dataRow =
-        [
-            [20.;  11.];
-            [22.;  29.];
-            [12.;  27.];
-            [13.;  15.];
-            [19.;  23.];
-            [28.;  18.];
-            [16.;  30.];
-            [25.;  24.];
-            [14.;  21.];
-            [17.;  26.]
-        ]
+        [ [ 20.
+            11. ]
+          [ 22.
+            29. ]
+          [ 12.
+            27. ]
+          [ 13.
+            15. ]
+          [ 19.
+            23. ]
+          [ 28.
+            18. ]
+          [ 16.
+            30. ]
+          [ 25.
+            24. ]
+          [ 14.
+            21. ]
+          [ 17.
+            26. ] ]
         |> matrix
 
-    let dataColumn = 
-        [
-            [20.;22.;12.;13.;19.;28.;16.;25.;14.;17.];
-            [11.;29.;27.;15.;23.;18.;30.;24.;21.;26.]
-        ]
+    let dataColumn =
+        [ [ 20.
+            22.
+            12.
+            13.
+            19.
+            28.
+            16.
+            25.
+            14.
+            17. ]
+          [ 11.
+            29.
+            27.
+            15.
+            23.
+            18.
+            30.
+            24.
+            21.
+            26. ] ]
         |> matrix
 
 
-    let compareIntervals a b (str:string) =
+    let compareIntervals a b (str: string) =
         Expect.floatClose Accuracy.high (Interval.getStart a) (Interval.getStart b) str
         Expect.floatClose Accuracy.high (Interval.getEnd a) (Interval.getEnd b) str
-    
-    testList "Signal.OutlierTests" [
-        testList "Z-Score" [
-            testCase "Z-Score in a population" <| fun() ->
-                let s = Seq.stDevPopulation(ls) //4.745144887
-                Expect.floatClose Accuracy.high (zScore -1.4 m s) -0.5184246337 "Z-Score in a population was calculated incorrectly"
 
-            testCase "Z-Score in a sample" <| fun()->
-                let sSample = Seq.stDev(ls)
-                Expect.floatClose Accuracy.high (zScore -1.4 m sSample) -0.4918207913 "Z-Score in a sample was calculated incorrectly"
-                
-            testCase "Z-Scores of a population" <| fun()->
-                let zLs = [-0.5184246337; -0.5184246337; -0.4973504616; -1.88824582; 1.757585953; -0.5394988058; 0.8303223808; 1.251805823; 0.008429668841; 0.1138005294]
-                TestExtensions.sequenceEqual Accuracy.high (zScoresOfPopulation ls) zLs "Z-Score of a population was calculated incorrectly"
-                
-            testCase "Z-Scores of a sample" <| fun()->
-                let zLsSample = [-0.4918207913; -0.4918207913; -0.4718280762; -1.791347272; 1.667392439; -0.5118135064; 0.7877129747; 1.187567277; 0.007997086037; 0.1079606615]
-                TestExtensions.sequenceEqual Accuracy.high (zScoresOfSample ls) zLsSample "Z-Score of a sample was calculated incorrectly"
-                
-            testCase "Population interval by Z-Score" <| fun()->
-                let populationInterval = Interval.Closed (-0.3635434661,3.432572444)
-                compareIntervals (populationIntervalByZScore -0.3 0.5 ls) populationInterval "Z-Score interval in a population was calculated incorrectly"
+    testList
+        "Signal.OutlierTests"
+        [ testList
+              "Z-Score"
+              [ testCase "Z-Score in a population"
+                <| fun () ->
+                    let s = Seq.stDevPopulation (ls) //4.745144887
+                    Expect.floatClose
+                        Accuracy.high
+                        (zScore -1.4 m s)
+                        -0.5184246337
+                        "Z-Score in a population was calculated incorrectly"
 
-            testCase "Sample interval by Z-Score" <| fun()->
-                let sampleInterval = Interval.Closed (-0.4405465671,3.560910945)
-                compareIntervals (sampleIntervalByZscore -0.3 0.5 ls) sampleInterval "Z-Score interval in a sample was calculated incorrectly"
-        ]
+                testCase "Z-Score in a sample"
+                <| fun () ->
+                    let sSample = Seq.stDev (ls)
+                    Expect.floatClose
+                        Accuracy.high
+                        (zScore -1.4 m sSample)
+                        -0.4918207913
+                        "Z-Score in a sample was calculated incorrectly"
 
-        testList "Mahalanobi's Distance" [
-            testCase "Mahalanobi's Distance for an observation in a matrix"<| fun() ->
-                let obs = Vector.ofList [20.; 11.] 
-                Expect.floatClose Accuracy.high (mahalanobisDistanceOfEntry dataRow    Matrix.Sample     Matrix.RowWise obs) 1.843936618 "Mahalanobi's Distance for an observation(Sample, RowWise) calculated incorrectly"
-                Expect.floatClose Accuracy.high (mahalanobisDistanceOfEntry dataColumn Matrix.Sample     Matrix.ColWise obs) 1.843936618 "Mahalanobi's Distance for an observation calculated(Sample, ColWise) incorrectly"
-                Expect.floatClose Accuracy.high (mahalanobisDistanceOfEntry dataRow    Matrix.Population Matrix.RowWise obs) 1.943679857 "Mahalanobi's Distance for an observation calculated(Population, RowWise) incorrectly"
-                Expect.floatClose Accuracy.high (mahalanobisDistanceOfEntry dataColumn Matrix.Population Matrix.ColWise obs) 1.943679857 "Mahalanobi's Distance for an observation calculated(Population, ColWise) incorrectly"
+                testCase "Z-Scores of a population"
+                <| fun () ->
+                    let zLs =
+                        [ -0.5184246337
+                          -0.5184246337
+                          -0.4973504616
+                          -1.88824582
+                          1.757585953
+                          -0.5394988058
+                          0.8303223808
+                          1.251805823
+                          0.008429668841
+                          0.1138005294 ]
+                    TestExtensions.sequenceEqual
+                        Accuracy.high
+                        (zScoresOfPopulation ls)
+                        zLs
+                        "Z-Score of a population was calculated incorrectly"
 
-            testCase "Mahalanobi's Distance for every observation in a matrix"<| fun() ->
-                let mahalDistancesSample = [1.843936618; 1.315823162; 1.395764847; 1.698572419; 0.1305760401; 1.862248734; 1.280527036; 1.28097611; 0.934074348; 0.6301069471]
-                let mahalDistancesPopulation = [1.943679857; 1.386999396; 1.471265332; 1.790452538; 0.1376392315; 1.962982523; 1.349794013; 1.350267379; 0.9846008145; 0.6641910408]
-                TestExtensions.sequenceEqual Accuracy.high (mahalanobisDistances Matrix.Sample       Matrix.RowWise dataRow   ) mahalDistancesSample  "Mahalanobi's Distance for every observation in a matrix(Sample, RowWise) was calculated incorrectly"
-                TestExtensions.sequenceEqual Accuracy.high (mahalanobisDistances Matrix.Population   Matrix.RowWise dataRow   ) mahalDistancesPopulation  "Mahalanobi's Distance for every observation in a matrix(Population, RowWise) was calculated incorrectly"
-                TestExtensions.sequenceEqual Accuracy.high (mahalanobisDistances Matrix.Sample       Matrix.ColWise dataColumn) mahalDistancesSample "Mahalanobi's Distance for every observation in a matrix(Sample, ColWise) was calculated incorrectly"
-                TestExtensions.sequenceEqual Accuracy.high (mahalanobisDistances Matrix.Population   Matrix.ColWise dataColumn) mahalDistancesPopulation  "Mahalanobi's Distance for every observation in a matrix(Population, ColWise) was calculated incorrectly"
+                testCase "Z-Scores of a sample"
+                <| fun () ->
+                    let zLsSample =
+                        [ -0.4918207913
+                          -0.4918207913
+                          -0.4718280762
+                          -1.791347272
+                          1.667392439
+                          -0.5118135064
+                          0.7877129747
+                          1.187567277
+                          0.007997086037
+                          0.1079606615 ]
+                    TestExtensions.sequenceEqual
+                        Accuracy.high
+                        (zScoresOfSample ls)
+                        zLsSample
+                        "Z-Score of a sample was calculated incorrectly"
 
-        ]
-    ]
+                testCase "Population interval by Z-Score"
+                <| fun () ->
+                    let populationInterval = Interval.Closed(-0.3635434661, 3.432572444)
+                    compareIntervals
+                        (populationIntervalByZScore -0.3 0.5 ls)
+                        populationInterval
+                        "Z-Score interval in a population was calculated incorrectly"
+
+                testCase "Sample interval by Z-Score"
+                <| fun () ->
+                    let sampleInterval = Interval.Closed(-0.4405465671, 3.560910945)
+                    compareIntervals
+                        (sampleIntervalByZscore -0.3 0.5 ls)
+                        sampleInterval
+                        "Z-Score interval in a sample was calculated incorrectly" ]
+
+          testList
+              "Mahalanobi's Distance"
+              [ testCase "Mahalanobi's Distance for an observation in a matrix"
+                <| fun () ->
+                    let obs =
+                        Vector.ofList
+                            [ 20.
+                              11. ]
+                    Expect.floatClose
+                        Accuracy.high
+                        (mahalanobisDistanceOfEntry dataRow Matrix.Sample Matrix.RowWise obs)
+                        1.843936618
+                        "Mahalanobi's Distance for an observation(Sample, RowWise) calculated incorrectly"
+                    Expect.floatClose
+                        Accuracy.high
+                        (mahalanobisDistanceOfEntry dataColumn Matrix.Sample Matrix.ColWise obs)
+                        1.843936618
+                        "Mahalanobi's Distance for an observation calculated(Sample, ColWise) incorrectly"
+                    Expect.floatClose
+                        Accuracy.high
+                        (mahalanobisDistanceOfEntry dataRow Matrix.Population Matrix.RowWise obs)
+                        1.943679857
+                        "Mahalanobi's Distance for an observation calculated(Population, RowWise) incorrectly"
+                    Expect.floatClose
+                        Accuracy.high
+                        (mahalanobisDistanceOfEntry dataColumn Matrix.Population Matrix.ColWise obs)
+                        1.943679857
+                        "Mahalanobi's Distance for an observation calculated(Population, ColWise) incorrectly"
+
+                testCase "Mahalanobi's Distance for every observation in a matrix"
+                <| fun () ->
+                    let mahalDistancesSample =
+                        [ 1.843936618
+                          1.315823162
+                          1.395764847
+                          1.698572419
+                          0.1305760401
+                          1.862248734
+                          1.280527036
+                          1.28097611
+                          0.934074348
+                          0.6301069471 ]
+                    let mahalDistancesPopulation =
+                        [ 1.943679857
+                          1.386999396
+                          1.471265332
+                          1.790452538
+                          0.1376392315
+                          1.962982523
+                          1.349794013
+                          1.350267379
+                          0.9846008145
+                          0.6641910408 ]
+                    TestExtensions.sequenceEqual
+                        Accuracy.high
+                        (mahalanobisDistances Matrix.Sample Matrix.RowWise dataRow)
+                        mahalDistancesSample
+                        "Mahalanobi's Distance for every observation in a matrix(Sample, RowWise) was calculated incorrectly"
+                    TestExtensions.sequenceEqual
+                        Accuracy.high
+                        (mahalanobisDistances Matrix.Population Matrix.RowWise dataRow)
+                        mahalDistancesPopulation
+                        "Mahalanobi's Distance for every observation in a matrix(Population, RowWise) was calculated incorrectly"
+                    TestExtensions.sequenceEqual
+                        Accuracy.high
+                        (mahalanobisDistances Matrix.Sample Matrix.ColWise dataColumn)
+                        mahalDistancesSample
+                        "Mahalanobi's Distance for every observation in a matrix(Sample, ColWise) was calculated incorrectly"
+                    TestExtensions.sequenceEqual
+                        Accuracy.high
+                        (mahalanobisDistances Matrix.Population Matrix.ColWise dataColumn)
+                        mahalDistancesPopulation
+                        "Mahalanobi's Distance for every observation in a matrix(Population, ColWise) was calculated incorrectly"
+
+                ] ]
 
 [<Tests>]
 let normalizationTests =
-    
-    let table = 
-        [
-            [4.5;4.2;3.6]
-            [4.3;4.2;0.5]
-            [2.5;4.1;0.6]
-        ]
+
+    let table =
+        [ [ 4.5
+            4.2
+            3.6 ]
+          [ 4.3
+            4.2
+            0.5 ]
+          [ 2.5
+            4.1
+            0.6 ] ]
         |> matrix
 
-    let tableB = 
-        [|
-        [|100.; 130.; 30.|]
-        [| 80.; 200.; 30.|]
-        [|  0.;  50.;  0.|]
-        [| 40.;  50.; 20.|]
-        [| 50.;  45.; 25.|]
-        [| 40.;  50.; 15.|]
-        |]
+    let tableB =
+        [| [| 100.
+              130.
+              30. |]
+           [| 80.
+              200.
+              30. |]
+           [| 0.
+              50.
+              0. |]
+           [| 40.
+              50.
+              20. |]
+           [| 50.
+              45.
+              25. |]
+           [| 40.
+              50.
+              15. |] |]
         |> matrix
 
-    let tableWithNan = 
-        [
-            [4.5;nan;3.6]
-            [4.3;4.2;nan]
-            [2.5;4.1;0.6]
-        ]
+    let tableWithNan =
+        [ [ 4.5
+            nan
+            3.6 ]
+          [ 4.3
+            4.2
+            nan ]
+          [ 2.5
+            4.1
+            0.6 ] ]
         |> matrix
 
-    testList "Signal.NormalizationTests" [
-        testCase "MedianOfRatios" <| fun() ->
+    testList
+        "Signal.NormalizationTests"
+        [ testCase "MedianOfRatios"
+          <| fun () ->
 
-            let expectedNormalizedTable = 
-                [
-                    [3.29784;2.08239;10.99283]
-                    [3.15127;2.08239;1.52678]
-                    [1.83213;2.03281;1.83213]
-                    
-                ]
-                |> matrix
+              let expectedNormalizedTable =
+                  [ [ 3.29784
+                      2.08239
+                      10.99283 ]
+                    [ 3.15127
+                      2.08239
+                      1.52678 ]
+                    [ 1.83213
+                      2.03281
+                      1.83213 ]
 
-            let result = Normalization.medianOfRatios table
+                    ]
+                  |> matrix
 
-            TestExtensions.sequenceEqual 4 result.NormedData expectedNormalizedTable "Matrix was not normalized correctly"
+              let result = Normalization.medianOfRatios table
 
-        testCase "MedianOfRatiosIgnoreNans" <| fun() ->
-           
-            let result = Normalization.medianOfRatiosBy (fun x -> if System.Double.IsNaN x then 0.1 else x) tableWithNan
+              TestExtensions.sequenceEqual
+                  4
+                  result.NormedData
+                  expectedNormalizedTable
+                  "Matrix was not normalized correctly"
 
-            Expect.hasCountOf result.NormedData 2u System.Double.IsNaN "Only initial nan values should be nans afterwards"
+          testCase "MedianOfRatiosIgnoreNans"
+          <| fun () ->
 
-        testCase "MedianOfRatioWides" <| fun() ->
-        
-            let result = Normalization.medianOfRatiosWide table
-            let expected = 
-                table
-                |> Matrix.transpose
-                |> Normalization.medianOfRatios
-                |> fun x -> x.NormedData
-                |> Matrix.transpose
-            TestExtensions.sequenceEqual 4 result.NormedData expected "Wide method should return the same result as the non wide method on a transposed matrix"
+              let result =
+                  Normalization.medianOfRatiosBy (fun x -> if System.Double.IsNaN x then 0.1 else x) tableWithNan
 
-        testCase "quantile" <| fun() ->
+              Expect.hasCountOf
+                  result.NormedData
+                  2u
+                  System.Double.IsNaN
+                  "Only initial nan values should be nans afterwards"
 
-            let expectedNormalizedTable = 
-                [
-                    [110. ; 80.  ; 80.  ]
-                    [80.  ; 110. ; 110. ]
-                    [15.  ; 35.  ; 15.  ]
-                    [35.  ; 36.6666666667 ; 36.6666666667 ]
-                    [41.6666666667 ; 15   ; 41.6666666667 ]
-                    [36.6666666667 ; 41.6666666667 ; 35.  ]
-                ]
-                |> matrix
+          testCase "MedianOfRatioWides"
+          <| fun () ->
 
-            let result = Normalization.quantile tableB
+              let result = Normalization.medianOfRatiosWide table
+              let expected =
+                  table
+                  |> Matrix.transpose
+                  |> Normalization.medianOfRatios
+                  |> fun x -> x.NormedData
+                  |> Matrix.transpose
+              TestExtensions.sequenceEqual
+                  4
+                  result.NormedData
+                  expected
+                  "Wide method should return the same result as the non wide method on a transposed matrix"
 
-            TestExtensions.sequenceEqual 4 result expectedNormalizedTable "Matrix was not normalized correctly"
-    ]
+          testCase "quantile"
+          <| fun () ->
 
-    
+              let expectedNormalizedTable =
+                  [ [ 110.
+                      80.
+                      80. ]
+                    [ 80.
+                      110.
+                      110. ]
+                    [ 15.
+                      35.
+                      15. ]
+                    [ 35.
+                      36.6666666667
+                      36.6666666667 ]
+                    [ 41.6666666667
+                      15
+                      41.6666666667 ]
+                    [ 36.6666666667
+                      41.6666666667
+                      35. ] ]
+                  |> matrix
+
+              let result = Normalization.quantile tableB
+
+              TestExtensions.sequenceEqual 4 result expectedNormalizedTable "Matrix was not normalized correctly" ]
+
+
 [<Tests>]
 let binningTests =
-    
+
     let testData =
-        [
-        "AT5G40650", 0.6142592186244475
-        "AT5G36950", 0.02961887351477155
-        "AT4G35320", 0.5711371856687455
-        "AT1G52030", 0.13714132092557502
-        "AT1G25480", 0.1777802253955505
-        "AT1G13608", 0.1835805021082776
-        "AT5G36950", 0.02961887351477155 //duplicate
-        "AT5G06120", 0.5109225016759817
-        "AT5G49150", 0.597941654040864
-        "AT4G36770", 0.6812994122019935
-        "AT5G10780", 0.003410975374229297
-        ]
+        [ "AT5G40650", 0.6142592186244475
+          "AT5G36950", 0.02961887351477155
+          "AT4G35320", 0.5711371856687455
+          "AT1G52030", 0.13714132092557502
+          "AT1G25480", 0.1777802253955505
+          "AT1G13608", 0.1835805021082776
+          "AT5G36950", 0.02961887351477155 //duplicate
+          "AT5G06120", 0.5109225016759817
+          "AT5G49150", 0.597941654040864
+          "AT4G36770", 0.6812994122019935
+          "AT5G10780", 0.003410975374229297 ]
 
     let testData1 =
-        [
-        0.05;
-        0.1;
-        0.2;
-        0.2;
-        0.3;
-        0.3;
-        0.3;
-        0.3;
-        0.4;
-        3.0;
-        3.0;
-        4.0;
-        6.0;
-        ]
+        [ 0.05
+          0.1
+          0.2
+          0.2
+          0.3
+          0.3
+          0.3
+          0.3
+          0.4
+          3.0
+          3.0
+          4.0
+          6.0 ]
 
-    testList "Signal.BinningTests" [
-        testCase "binBy" <| fun() ->
+    testList
+        "Signal.BinningTests"
+        [ testCase "binBy"
+          <| fun () ->
 
-            let expected = 
-                [|
-                0.05, ["AT5G36950", 0.02961887351477155;"AT5G36950", 0.02961887351477155;"AT5G10780", 0.003410975374229297]
-                0.15, ["AT1G52030", 0.13714132092557502; "AT1G25480", 0.1777802253955505;"AT1G13608", 0.1835805021082776]
-                0.55, ["AT4G35320", 0.5711371856687455; "AT5G06120", 0.5109225016759817;  "AT5G49150", 0.597941654040864]
-                0.65, ["AT5G40650", 0.6142592186244475;"AT4G36770", 0.6812994122019935]
-                |]
+              let expected =
+                  [| 0.05,
+                     [ "AT5G36950", 0.02961887351477155
+                       "AT5G36950", 0.02961887351477155
+                       "AT5G10780", 0.003410975374229297 ]
+                     0.15,
+                     [ "AT1G52030", 0.13714132092557502
+                       "AT1G25480", 0.1777802253955505
+                       "AT1G13608", 0.1835805021082776 ]
+                     0.55,
+                     [ "AT4G35320", 0.5711371856687455
+                       "AT5G06120", 0.5109225016759817
+                       "AT5G49150", 0.597941654040864 ]
+                     0.65,
+                     [ "AT5G40650", 0.6142592186244475
+                       "AT4G36770", 0.6812994122019935 ] |]
 
-            let expectedBins = expected |> Array.map fst
-            let expectedIds  = expected |> Array.map (snd >> List.map fst)
-            let expectedVals = expected |> Array.map (snd >> List.map snd)
+              let expectedBins = expected |> Array.map fst
+              let expectedIds = expected |> Array.map (snd >> List.map fst)
+              let expectedVals = expected |> Array.map (snd >> List.map snd)
 
-            let actual = 
-                Signal.Binning.binBy snd 0.1 testData  
-                |> Map.map (fun a b -> List.ofSeq b)
-                |> Map.toArray
+              let actual =
+                  Signal.Binning.binBy snd 0.1 testData
+                  |> Map.map (fun a b -> List.ofSeq b)
+                  |> Map.toArray
 
-            let actualBins = actual |> Array.map fst
-            let actualIds  = actual |> Array.map (snd >> List.map fst)
-            let actualVals = actual |> Array.map (snd >> List.map snd)
-                
-            TestExtensions.sequenceEqual 10 actualBins expectedBins "Binning was not performed correctly"
+              let actualBins = actual |> Array.map fst
+              let actualIds = actual |> Array.map (snd >> List.map fst)
+              let actualVals = actual |> Array.map (snd >> List.map snd)
 
-            expectedVals 
-            |> Array.iteri (fun i e -> 
-                TestExtensions.sequenceEqual 10 actualVals.[i] e "Binning was not performed correctly"
-                )
-                
-            Expect.equal actualIds expectedIds "Binning was not performed correctly"
+              TestExtensions.sequenceEqual 10 actualBins expectedBins "Binning was not performed correctly"
 
-        testCase "zeroBindwith" <| fun() ->
+              expectedVals
+              |> Array.iteri (fun i e ->
+                  TestExtensions.sequenceEqual 10 actualVals.[i] e "Binning was not performed correctly"
+              )
 
-            let zeroBandwidth() = 
-                Signal.Binning.binBy snd 0.0 testData |> ignore
+              Expect.equal actualIds expectedIds "Binning was not performed correctly"
 
-            Expect.throwsT<(System.DivideByZeroException) > zeroBandwidth "Binning was not performed correctly"
+          testCase "zeroBindwith"
+          <| fun () ->
 
-        testCase "bin0.1" <| fun() ->
-            
-            let actual = 
-                Signal.Binning.bin 0.1 testData1
-                |> Map.map (fun a b -> List.ofSeq b)
-                |> Map.toArray
+              let zeroBandwidth () =
+                  Signal.Binning.binBy snd 0.0 testData |> ignore
 
-            let actualBins = actual |> Array.map fst
-            let actualIds  = actual |> Array.map snd
-            let actualVals = actual |> Array.map snd
+              Expect.throwsT<(System.DivideByZeroException)> zeroBandwidth "Binning was not performed correctly"
 
-            let expected = 
-                [|
-                0.05, [0.05]
-                0.15, [0.1]
-                0.25, [0.2;0.2]
-                0.35, [0.3;0.3;0.3;0.3;]
-                0.45, [0.4]
-                3.05, [3.;3.]
-                4.05, [4.]
-                6.05, [6.]
-                |]
+          testCase "bin0.1"
+          <| fun () ->
 
-            let expectedBins = expected |> Array.map fst
-            let expectedIds  = expected |> Array.map snd
-            let expectedVals = expected |> Array.map snd
+              let actual =
+                  Signal.Binning.bin 0.1 testData1
+                  |> Map.map (fun a b -> List.ofSeq b)
+                  |> Map.toArray
 
-            TestExtensions.sequenceEqual 10 actualBins expectedBins "Binning was not performed correctly"
+              let actualBins = actual |> Array.map fst
+              let actualIds = actual |> Array.map snd
+              let actualVals = actual |> Array.map snd
 
-            expectedVals 
-            |> Array.iteri (fun i e -> 
-                TestExtensions.sequenceEqual 10 actualVals.[i] e "Binning was not performed correctly"
-                )
-                
-            Expect.equal actualIds expectedIds "Binning was not performed correctly"
+              let expected =
+                  [| 0.05, [ 0.05 ]
+                     0.15, [ 0.1 ]
+                     0.25,
+                     [ 0.2
+                       0.2 ]
+                     0.35,
+                     [ 0.3
+                       0.3
+                       0.3
+                       0.3 ]
+                     0.45, [ 0.4 ]
+                     3.05,
+                     [ 3.
+                       3. ]
+                     4.05, [ 4. ]
+                     6.05, [ 6. ] |]
 
-        testCase "bin1.0" <| fun() ->
-            
-            let actual = 
-                Signal.Binning.bin 1. testData1
-                |> Map.map (fun a b -> List.ofSeq b)
-                |> Map.toArray
+              let expectedBins = expected |> Array.map fst
+              let expectedIds = expected |> Array.map snd
+              let expectedVals = expected |> Array.map snd
 
-            let actualBins = actual |> Array.map fst
-            let actualIds  = actual |> Array.map snd
-            let actualVals = actual |> Array.map snd
+              TestExtensions.sequenceEqual 10 actualBins expectedBins "Binning was not performed correctly"
 
-            let expected = 
-                [|
-                0.5, [0.05;0.1;0.2;0.2;0.3;0.3;0.3;0.3;0.4]
-                3.5, [3.;3.]
-                4.5, [4.]
-                6.5, [6.]
-                |]
+              expectedVals
+              |> Array.iteri (fun i e ->
+                  TestExtensions.sequenceEqual 10 actualVals.[i] e "Binning was not performed correctly"
+              )
 
-            let expectedBins = expected |> Array.map fst
-            let expectedIds  = expected |> Array.map snd
-            let expectedVals = expected |> Array.map snd
+              Expect.equal actualIds expectedIds "Binning was not performed correctly"
 
-            TestExtensions.sequenceEqual 10 actualBins expectedBins "Binning was not performed correctly"
+          testCase "bin1.0"
+          <| fun () ->
 
-            expectedVals 
-            |> Array.iteri (fun i e -> 
-                TestExtensions.sequenceEqual 10 actualVals.[i] e "Binning was not performed correctly"
-                )
-                
-            Expect.equal actualIds expectedIds "Binning was not performed correctly"
-    ]
+              let actual =
+                  Signal.Binning.bin 1. testData1
+                  |> Map.map (fun a b -> List.ofSeq b)
+                  |> Map.toArray
+
+              let actualBins = actual |> Array.map fst
+              let actualIds = actual |> Array.map snd
+              let actualVals = actual |> Array.map snd
+
+              let expected =
+                  [| 0.5,
+                     [ 0.05
+                       0.1
+                       0.2
+                       0.2
+                       0.3
+                       0.3
+                       0.3
+                       0.3
+                       0.4 ]
+                     3.5,
+                     [ 3.
+                       3. ]
+                     4.5, [ 4. ]
+                     6.5, [ 6. ] |]
+
+              let expectedBins = expected |> Array.map fst
+              let expectedIds = expected |> Array.map snd
+              let expectedVals = expected |> Array.map snd
+
+              TestExtensions.sequenceEqual 10 actualBins expectedBins "Binning was not performed correctly"
+
+              expectedVals
+              |> Array.iteri (fun i e ->
+                  TestExtensions.sequenceEqual 10 actualVals.[i] e "Binning was not performed correctly"
+              )
+
+              Expect.equal actualIds expectedIds "Binning was not performed correctly" ]
 
 
 [<Tests>]
@@ -320,96 +534,445 @@ let paddingTests =
     let dataLength = 20
     let padding = 10
 
-    let data =
-        Array.init dataLength (
-            fun i ->
-                (3.0 + float i, 7.0 - float i)
-        )
-    
-    let randomTwoDimensionalArray dimension1Length dimension2Length  =
+    let data = Array.init dataLength (fun i -> (3.0 + float i, 7.0 - float i))
+
+    let randomTwoDimensionalArray dimension1Length dimension2Length =
         Array2D.init dimension1Length dimension2Length (fun _ _ -> rnd.NextDouble())
-    
+
     let randomArray length =
         Array.init length (fun _ -> rnd.NextDouble())
-             
-    testList "Signal.PaddingTests" [
 
-        testCase "pad" <| fun() ->
+    testList
+        "Signal.PaddingTests"
+        [
 
-            let expectLeadIn  = Array.init padding (fun i -> (3.0 - float (padding-i), 0.0))
-            let expectLeadOut = Array.init padding (fun i -> (3.0 + float (dataLength + i), 0.0))
-            let expectedPadded = Array.concat [expectLeadIn; data; expectLeadOut]
+          testCase "pad"
+          <| fun () ->
 
-            let padded = Padding.pad data 1.0 Double.PositiveInfinity (-) (+) padding Padding.BorderPaddingMethod.Zero Padding.InternalPaddingMethod.NaN Padding.HugeGapPaddingMethod.NaN
+              let expectLeadIn = Array.init padding (fun i -> (3.0 - float (padding - i), 0.0))
+              let expectLeadOut =
+                  Array.init padding (fun i -> (3.0 + float (dataLength + i), 0.0))
+              let expectedPadded =
+                  Array.concat
+                      [ expectLeadIn
+                        data
+                        expectLeadOut ]
 
-            Expect.equal (Array.sub padded 0 padding) expectLeadIn "padding is incorrect" 
-            Expect.equal (Array.sub padded (padded.Length - padding) padding) expectLeadOut "padding is incorrect"
-            Expect.equal (Array.sub padded padding data.Length) data "All the original data should be contained in the padded data"
-            Expect.equal padded.Length (data.Length + 2 * padding) "Length should be the original data length plus padding at each end"
-            Expect.equal (padded |> Array.sortBy fst) expectedPadded "Result should be the lead-in, whole data, then lead-out (maybe not in order?)"
-            Expect.equal padded expectedPadded "Result should be the lead-in, whole data, then lead-out"
-            
-        testCase "three dimensional pad with zeroes" <| fun() ->
-            let originalDimension1 = 30
-            let originalDimension2 = 40
-            let originalData = randomTwoDimensionalArray originalDimension1 originalDimension2
-            
-            let newHeight = (originalDimension1 + 2 * padding)
-            let newWidth = (originalDimension2 + 2 * padding)
-            let isPointInOriginalData i j =
-                (i >= padding && i < originalDimension1 + padding) &&
-                (j >= padding && j < originalDimension2 + padding)
-            
-            let expected =
-                        Array2D.init newHeight newWidth (fun i j -> 
-                        if isPointInOriginalData i j 
-                            then originalData[i-padding, j-padding]
-                        else 0.)
-            
-            let paddedData2D = ThreeDimensional.pad originalData padding ThreeDimensional.Zero
-            
-            Expect.equal paddedData2D expected "padded data is incorrect" 
-        
-        
-        testCase "three dimensional pad with random padding" <| fun() ->
-            let originalHeight = 30
-            let originalWidth = 40
-            
-            let originalData = randomTwoDimensionalArray originalHeight originalWidth
-                        
-            let newHeight = (originalHeight + 2 * padding)
-            let newWidth = (originalWidth + 2 * padding)
-            let flattenToArray (arr: 'T [,]) = arr |> Seq.cast<'T> |> Seq.toArray
-            
-            let paddedData2D = ThreeDimensional.pad originalData padding ThreeDimensional.Random
-            
-            Expect.equal paddedData2D.Length (newHeight * newWidth) "padded data length incorrect"
-            // All the padded values should belong to the original data set
-            Expect.containsAll (originalData |> flattenToArray) (paddedData2D |> flattenToArray) "padded data contains item not in original data"
-        
-        
-        testCase "padZero to discrete data" <| fun() ->
-            let originalData = randomArray dataLength
-            let newLength = (dataLength + 2 * padding)
-            let isPointInOriginalData i =
-                (i >= padding && i < dataLength + padding)
-                
-            let expected = Array.init newLength (fun i -> if isPointInOriginalData i 
-                                                          then originalData[i-padding]
-                                                          else 0.)
-            
-            let paddedData = padZero originalData padding
-            
-            Expect.equal paddedData expected "padded data incorrect"
-        
-        testCase "padRnd to discrete data" <| fun() ->
-            let originalData = randomArray dataLength
-            let newLength = (dataLength + 2 * padding)
-                
-            let paddedData = padRnd originalData padding
-            
-            Expect.equal paddedData.Length newLength "padded data length incorrect"
-            // All the padded values should belong to the original data set
-            Expect.containsAll originalData paddedData "padded data contains item not in original data"
-        ]
-    
+              let padded =
+                  Padding.pad
+                      data
+                      1.0
+                      Double.PositiveInfinity
+                      (-)
+                      (+)
+                      padding
+                      Padding.BorderPaddingMethod.Zero
+                      Padding.InternalPaddingMethod.NaN
+                      Padding.HugeGapPaddingMethod.NaN
+
+              Expect.equal (Array.sub padded 0 padding) expectLeadIn "padding is incorrect"
+              Expect.equal (Array.sub padded (padded.Length - padding) padding) expectLeadOut "padding is incorrect"
+              Expect.equal
+                  (Array.sub padded padding data.Length)
+                  data
+                  "All the original data should be contained in the padded data"
+              Expect.equal
+                  padded.Length
+                  (data.Length + 2 * padding)
+                  "Length should be the original data length plus padding at each end"
+              Expect.equal
+                  (padded |> Array.sortBy fst)
+                  expectedPadded
+                  "Result should be the lead-in, whole data, then lead-out (maybe not in order?)"
+              Expect.equal padded expectedPadded "Result should be the lead-in, whole data, then lead-out"
+
+          testCase "three dimensional pad with zeroes"
+          <| fun () ->
+              let originalDimension1 = 30
+              let originalDimension2 = 40
+              let originalData = randomTwoDimensionalArray originalDimension1 originalDimension2
+
+              let newHeight = (originalDimension1 + 2 * padding)
+              let newWidth = (originalDimension2 + 2 * padding)
+              let isPointInOriginalData i j =
+                  (i >= padding && i < originalDimension1 + padding)
+                  && (j >= padding && j < originalDimension2 + padding)
+
+              let expected =
+                  Array2D.init
+                      newHeight
+                      newWidth
+                      (fun i j ->
+                          if isPointInOriginalData i j then
+                              originalData[i - padding, j - padding]
+                          else
+                              0.
+                      )
+
+              let paddedData2D = ThreeDimensional.pad originalData padding ThreeDimensional.Zero
+
+              Expect.equal paddedData2D expected "padded data is incorrect"
+
+
+          testCase "three dimensional pad with random padding"
+          <| fun () ->
+              let originalHeight = 30
+              let originalWidth = 40
+
+              let originalData = randomTwoDimensionalArray originalHeight originalWidth
+
+              let newHeight = (originalHeight + 2 * padding)
+              let newWidth = (originalWidth + 2 * padding)
+              let flattenToArray (arr: 'T[,]) = arr |> Seq.cast<'T> |> Seq.toArray
+
+              let paddedData2D = ThreeDimensional.pad originalData padding ThreeDimensional.Random
+
+              Expect.equal paddedData2D.Length (newHeight * newWidth) "padded data length incorrect"
+              // All the padded values should belong to the original data set
+              Expect.containsAll
+                  (originalData |> flattenToArray)
+                  (paddedData2D |> flattenToArray)
+                  "padded data contains item not in original data"
+
+
+          testCase "padZero to discrete data"
+          <| fun () ->
+              let originalData = randomArray dataLength
+              let newLength = (dataLength + 2 * padding)
+              let isPointInOriginalData i =
+                  (i >= padding && i < dataLength + padding)
+
+              let expected =
+                  Array.init
+                      newLength
+                      (fun i ->
+                          if isPointInOriginalData i then
+                              originalData[i - padding]
+                          else
+                              0.
+                      )
+
+              let paddedData = padZero originalData padding
+
+              Expect.equal paddedData expected "padded data incorrect"
+
+          testCase "padRnd to discrete data"
+          <| fun () ->
+              let originalData = randomArray dataLength
+              let newLength = (dataLength + 2 * padding)
+
+              let paddedData = padRnd originalData padding
+
+              Expect.equal paddedData.Length newLength "padded data length incorrect"
+              // All the padded values should belong to the original data set
+              Expect.containsAll originalData paddedData "padded data contains item not in original data" ]
+
+[<Tests>]
+let filteringTests =
+
+    testList
+        "Signal.FilteringTests"
+        [
+
+          testList
+              "savitzkyGolay - basic smoothing"
+              [
+
+                testCase "smooth noisy sine wave (windowSize=11, order=2)"
+                <| fun () ->
+                    // Generate noisy sine wave with significant noise
+                    let rnd = System.Random(42)
+                    let noisyData =
+                        [| 0..50 |]
+                        |> Array.map (fun x ->
+                            let t = float x * 0.3
+                            sin (t) + (rnd.NextDouble() - 0.5) * 0.5
+                        )
+
+                    let smoothed = Signal.Filtering.savitzkyGolay 11 2 0 1 noisyData
+
+                    // Smoothed data should have same length as input
+                    Expect.equal smoothed.Length noisyData.Length "Output length should match input"
+
+                    // For all values should be finite
+                    for i in 0 .. smoothed.Length - 1 do
+                        Expect.isTrue
+                            (not (System.Double.IsNaN smoothed.[i])
+                             && not (System.Double.IsInfinity smoothed.[i]))
+                            "All values should be finite"
+
+                testCase "smooth linear data (should remain unchanged)"
+                <| fun () ->
+                    // Linear data should be perfectly reconstructed by polynomial filter
+                    let linearData = [| 0.0..1.0..10.0 |]
+                    let smoothed = Signal.Filtering.savitzkyGolay 5 1 0 1 linearData
+
+                    // For linear data with order >= 1, result should be very close to original
+                    TestExtensions.sequenceEqual 2 smoothed linearData "Linear data should be preserved"
+
+                testCase "smooth quadratic data with order=2"
+                <| fun () ->
+                    // With proper order and window, quadratic trend should be well-preserved
+                    let quadraticData = [| 0.0 .. 20.0 |] |> Array.map (fun x -> x * x)
+                    let smoothed = Signal.Filtering.savitzkyGolay 11 2 0 1 quadraticData
+
+                    // Check that smoothed data still follows quadratic trend (not perfectly preserved at edges)
+                    // Check middle values
+                    for i in 5..15 do
+                        Expect.floatClose
+                            Accuracy.low
+                            smoothed.[i]
+                            quadraticData.[i]
+                            $"Quadratic trend should be preserved at index {i}"
+
+                testCase "output has correct length"
+                <| fun () ->
+                    let data = Array.init 30 (fun i -> float i + (float i % 3.0))
+                    let smoothed = Signal.Filtering.savitzkyGolay 7 2 0 1 data
+
+                    Expect.equal smoothed.Length data.Length "Output should have same length as input" ]
+
+          testList
+              "savitzkyGolay - derivatives"
+              [
+
+                testCase "first derivative of linear function"
+                <| fun () ->
+                    // Derivative of linear function y = 2x should be constant 2
+                    let linearData = [| 0.0 .. 10.0 |] |> Array.map (fun x -> 2.0 * x)
+                    let derivative = Signal.Filtering.savitzkyGolay 5 2 1 1 linearData
+
+                    // Check middle values (edges may have boundary effects)
+                    for i in 2..7 do
+                        Expect.floatClose Accuracy.low derivative.[i] 2.0 "First derivative of 2x should be ~2"
+
+                testCase "first derivative of quadratic function"
+                <| fun () ->
+                    // Derivative of y = x^2 is 2x
+                    let quadraticData = [| 0.0 .. 10.0 |] |> Array.map (fun x -> x * x)
+                    let derivative = Signal.Filtering.savitzkyGolay 7 3 1 1 quadraticData
+
+                    // Check middle values where x=5, derivative should be ~10
+                    Expect.floatClose Accuracy.low derivative.[5] 10.0 "First derivative of x^2 at x=5 should be ~10"
+
+                testCase "second derivative of quadratic function"
+                <| fun () ->
+                    // Second derivative of y = x^2 is 2
+                    let quadraticData = [| 0.0 .. 20.0 |] |> Array.map (fun x -> x * x)
+                    let secondDeriv = Signal.Filtering.savitzkyGolay 7 3 2 1 quadraticData
+
+                    // Check middle values
+                    for i in 5..15 do
+                        Expect.floatClose Accuracy.low secondDeriv.[i] 2.0 "Second derivative of x^2 should be ~2" ]
+
+          testList
+              "savitzkyGolay - error handling"
+              [
+
+                testCase "windowSize must be odd"
+                <| fun () ->
+                    let data =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0 |]
+                    Expect.throwsC
+                        (fun () -> Signal.Filtering.savitzkyGolay 4 2 0 1 data |> ignore)
+                        (fun ex -> Expect.stringContains (ex.Message) "odd" "Should require odd window size")
+
+                testCase "windowSize must be positive"
+                <| fun () ->
+                    let data =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0 |]
+                    Expect.throwsC
+                        (fun () -> Signal.Filtering.savitzkyGolay 0 2 0 1 data |> ignore)
+                        (fun ex -> Expect.stringContains (ex.Message) "positive" "Should require positive window size")
+
+                testCase "order must be >= derivative order"
+                <| fun () ->
+                    let data =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0 |]
+                    Expect.throwsC
+                        (fun () -> Signal.Filtering.savitzkyGolay 5 1 2 1 data |> ignore)
+                        (fun ex -> Expect.stringContains (ex.Message) "order must be greater" "Order must be >= deriv")
+
+                testCase "windowSize must be large enough for polynomial order"
+                <| fun () ->
+                    let data =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0
+                           6.0
+                           7.0 |]
+                    Expect.throwsC
+                        (fun () -> Signal.Filtering.savitzkyGolay 5 5 0 1 data |> ignore)
+                        (fun ex -> Expect.stringContains (ex.Message) "too small" "Window size must be > order + 1") ]
+
+          testList
+              "savitzkyGolay - edge cases"
+              [
+
+                testCase "minimum valid configuration (windowSize=3, order=1)"
+                <| fun () ->
+                    let data =
+                        [| 1.0
+                           2.0
+                           3.0
+                           4.0
+                           5.0 |]
+                    let smoothed = Signal.Filtering.savitzkyGolay 3 1 0 1 data
+
+                    Expect.equal smoothed.Length data.Length "Output should have same length as input"
+                    Expect.isNotNaN smoothed.[0] "Should not produce NaN"
+
+                testCase "single peak removal"
+                <| fun () ->
+                    // Single outlier spike should be smoothed out
+                    let data =
+                        [| 1.0
+                           1.0
+                           1.0
+                           5.0
+                           1.0
+                           1.0
+                           1.0 |]
+                    let smoothed = Signal.Filtering.savitzkyGolay 5 2 0 1 data
+
+                    // The spike at index 3 should be reduced
+                    Expect.isLessThan smoothed.[3] 3.0 "Spike should be smoothed"
+
+                testCase "handles constant signal"
+                <| fun () ->
+                    let data = Array.create 10 5.0
+                    let smoothed = Signal.Filtering.savitzkyGolay 5 2 0 1 data
+
+                    // Constant signal should remain constant
+                    for i in 0..9 do
+                        Expect.floatClose Accuracy.high smoothed.[i] 5.0 "Constant signal should remain constant" ]
+
+          testList
+              "optimizeWindowWidth"
+              [
+
+                testCase "finds optimal window for noisy signal"
+                <| fun () ->
+                    // Create blank signal (noise only)
+                    let rnd = System.Random(42)
+                    let blankSignal = Array.init 100 (fun _ -> rnd.NextDouble() * 0.1 - 0.05)
+
+                    // Create signal of interest (sine wave + noise)
+                    let signalOfInterest =
+                        Array.init
+                            100
+                            (fun i ->
+                                let t = float i * 0.2
+                                sin (t) + rnd.NextDouble() * 0.1 - 0.05
+                            )
+
+                    // For order=2, windowSize must be > order+1, so minimum is 5
+                    let windowsToTest =
+                        [| 5
+                           7
+                           9
+                           11 |]
+                    let optimalWindow =
+                        Signal.Filtering.optimizeWindowWidth 2 windowsToTest blankSignal signalOfInterest
+
+                    // Should return one of the test windows
+                    Expect.contains windowsToTest optimalWindow "Should return one of the tested windows"
+                    // Should be an odd number
+                    Expect.equal (optimalWindow % 2) 1 "Optimal window should be odd"
+
+                testCase "filters out even window sizes"
+                <| fun () ->
+                    let blankSignal = Array.init 50 (fun i -> float i * 0.01)
+                    let signalOfInterest = Array.init 50 (fun i -> float i * 0.02)
+
+                    // Include even numbers in test array (will be filtered to odd)
+                    // For order=2, min window is 5
+                    let windowsToTest =
+                        [| 4
+                           5
+                           6
+                           7
+                           8
+                           9 |]
+                    let optimalWindow =
+                        Signal.Filtering.optimizeWindowWidth 2 windowsToTest blankSignal signalOfInterest
+
+                    // Should only consider odd windows >= 5
+                    Expect.isTrue (optimalWindow % 2 = 1) "Should filter out even windows"
+                    Expect.contains
+                        [| 5
+                           7
+                           9 |]
+                        optimalWindow
+                        "Should only pick from valid odd windows"
+
+                testCase "works with small dataset"
+                <| fun () ->
+                    let blankSignal =
+                        [| 0.1
+                           0.05
+                           0.15
+                           0.08
+                           0.12
+                           0.09
+                           0.11
+                           0.07
+                           0.13
+                           0.10 |]
+                    let signalOfInterest =
+                        [| 1.0
+                           1.5
+                           1.2
+                           1.8
+                           1.6
+                           2.0
+                           1.9
+                           2.2
+                           2.1
+                           2.3 |]
+
+                    // For order=2, windowSize must be > 3 (order+1), so use 5
+                    let windowsToTest =
+                        [| 5
+                           7 |]
+                    let optimalWindow =
+                        Signal.Filtering.optimizeWindowWidth 2 windowsToTest blankSignal signalOfInterest
+
+                    Expect.contains windowsToTest optimalWindow "Should return valid window"
+
+                testCase "returns valid result for various polynomial orders"
+                <| fun () ->
+                    let rnd = System.Random(123)
+                    let blankSignal = Array.init 100 (fun _ -> rnd.NextDouble() * 0.2)
+                    let signalOfInterest =
+                        Array.init 100 (fun i -> float i * 0.1 + rnd.NextDouble() * 0.2)
+
+                    // Use windows appropriate for each polynomial order
+                    // For order n, window must be > n+1, and must be odd
+                    for polOrder in
+                        [ 2
+                          3
+                          4 ] do
+                        let minWindow = polOrder + 2
+                        // Start from next odd number >= minWindow
+                        let startWindow = if minWindow % 2 = 1 then minWindow else minWindow + 1
+                        let windowsToTest = [| for i in 0..3 -> startWindow + i * 2 |]
+                        let optimalWindow =
+                            Signal.Filtering.optimizeWindowWidth polOrder windowsToTest blankSignal signalOfInterest
+                        Expect.contains windowsToTest optimalWindow $"Should work with polynomial order {polOrder}" ] ]
