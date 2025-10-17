@@ -1,0 +1,69 @@
+name: 'Test Coverage Steps'
+description: 'Runs build, tests, and generates coverage report for FSharp.Stats'
+runs:
+  using: "composite"
+  steps:
+    # Step 1: Restore dotnet tools (includes AltCover and other build tools)
+    - name: Restore dotnet local tools
+      shell: bash
+      run: |
+        echo "=== Restoring dotnet local tools ===" | tee -a coverage-steps.log
+        dotnet tool restore 2>&1 | tee -a coverage-steps.log
+        echo "Exit code: $?" | tee -a coverage-steps.log
+
+    # Step 2: Build the solution in Release configuration
+    - name: Build solution
+      shell: bash
+      run: |
+        echo "=== Building FSharp.Stats solution ===" | tee -a coverage-steps.log
+        dotnet build FSharp.Stats.sln --configuration Release 2>&1 | tee -a coverage-steps.log
+        echo "Exit code: $?" | tee -a coverage-steps.log
+
+    # Step 3: Run tests with AltCover to generate coverage report
+    # AltCover configuration:
+    # - AltCover=true: Enable coverage collection
+    # - AltCoverCobertura: Output path for Cobertura XML format (codeCov.xml in repo root)
+    # - AltCoverForce=true: Force coverage even if previously run
+    - name: Run tests with coverage
+      shell: bash
+      run: |
+        echo "=== Running tests with AltCover coverage ===" | tee -a coverage-steps.log
+        dotnet test tests/FSharp.Stats.Tests/FSharp.Stats.Tests.fsproj \
+          --configuration Release \
+          --no-build \
+          /p:AltCover=true \
+          /p:AltCoverCobertura=../../codeCov.xml \
+          /p:AltCoverForce=true \
+          --logger "console;verbosity=detailed" 2>&1 | tee -a coverage-steps.log
+        echo "Exit code: $?" | tee -a coverage-steps.log
+
+    # Step 4: Verify coverage report was generated
+    - name: Verify coverage report exists
+      shell: bash
+      run: |
+        echo "=== Verifying coverage report ===" | tee -a coverage-steps.log
+        if [ -f "codeCov.xml" ]; then
+          echo "✓ Coverage report generated: codeCov.xml" | tee -a coverage-steps.log
+          echo "File size: $(wc -c < codeCov.xml) bytes" | tee -a coverage-steps.log
+          # Extract and display summary line coverage percentage
+          if command -v xmllint &> /dev/null; then
+            echo "Coverage summary:" | tee -a coverage-steps.log
+            xmllint --xpath "string(//coverage/@line-rate)" codeCov.xml 2>/dev/null | \
+              awk '{printf "Line coverage: %.2f%%\n", $1 * 100}' | tee -a coverage-steps.log
+          fi
+        else
+          echo "✗ Coverage report not found!" | tee -a coverage-steps.log
+          exit 1
+        fi
+
+    # Step 5: Upload coverage report as artifact
+    # The coverage report will be available as "coverage" artifact
+    # This can be used by subsequent jobs or for manual download
+    - name: Upload coverage report artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage
+        path: |
+          codeCov.xml
+          coverage-steps.log
+        retention-days: 7
